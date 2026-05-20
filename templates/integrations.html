@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Интеграции{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="mb-3">Интеграции</h1>
+        <p class="text-muted">Свяжите WhatsApp Cloud API с вашим аккаунтом, чтобы входящие сообщения попадали во <a href="{{ url_for('inbox') }}">Входящие</a>.</p>
+
+        <div class="card mb-4">
+            <div class="card-header"><strong>WhatsApp</strong></div>
+            <div class="card-body">
+                <p>Скопируйте <strong>Phone number ID</strong> из кабинета Meta (раздел WhatsApp → API Setup / Номер) и вставьте ниже. Он должен совпадать с <code>metadata.phone_number_id</code> во входящих вебхуках.</p>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Phone number ID (WhatsApp)</label>
+                        <input type="text" name="whatsapp_phone_number_id" class="form-control"
+                               value="{{ current_user.whatsapp_phone_number_id or '' }}"
+                               placeholder="Например: 123456789012345">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><strong>URL вебхуков</strong></div>
+            <div class="card-body">
+                <p>Используйте свой публичный домен (HTTPS):</p>
+                <ul>
+                    <li><code>{{ request.url_root }}webhooks/whatsapp</code></li>
+                    <li><code>{{ request.url_root }}webhooks/telegram</code></li>
+                </ul>
+                <p class="mb-0">Полная пошаговая инструкция лежит в репозитории: <code>docs/MESSAGING_SETUP_RU.md</code>.</p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">К клиентам</a>
+    </div>
+</div>
+{% endblock %}

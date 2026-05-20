@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Календарь{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Календарь записей</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Клиенты</a>
+</div>
+
+{% include '_calendar_shell.html' %}
+
+<h5 class="mt-4 mb-3">Записи: {{ calendar_view.header_label }}</h5>
+{% for a in calendar_appointments %}
+<div class="card mb-2" id="ap-{{ a.id }}">
+    <div class="card-body py-2 d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h6 class="mb-1">{{ a.title }}
+                {% if a.status == 'cancelled' %}<span class="badge bg-secondary">отменена</span>{% else %}<span class="badge bg-success">активна</span>{% endif %}
+                {% if a.recurrence_series_id %}<span class="badge bg-info text-dark" title="Серия повторений">↻</span>{% endif %}
+            </h6>
+            <small class="text-muted">{{ a.start_at.strftime('%d.%m.%Y %H:%M') }} — {{ a.end_at.strftime('%H:%M') }}
+                {% if a.price %} · {{ '%.0f'|format(a.price) }} ₽{% endif %}
+            </small>
+            {% if a.client %}<div><small>Клиент: <a href="{{ url_for('client_detail', client_id=a.client.id) }}">{{ a.client.name }}</a></small></div>{% endif %}
+            {% if a.notes %}<p class="mb-0 mt-1"><small>{{ a.notes }}</small></p>{% endif %}
+        </div>
+        <div class="btn-group btn-group-sm flex-shrink-0">
+            {% if a.status != 'cancelled' %}
+            <form method="POST" action="{{ url_for('appointment_cancel', appointment_id=a.id) }}"
+                  onsubmit="return confirm('Отменить запись? Она останется в календаре как отменённая.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-secondary">Отменить</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('appointment_delete', appointment_id=a.id) }}"
+                  onsubmit="return confirm('Удалить запись безвозвратно?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger">Удалить</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">На выбранный период записей нет.</div>
+{% endfor %}
+{% endblock %}

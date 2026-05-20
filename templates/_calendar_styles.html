@@ -1,0 +1,286 @@
+<style>
+/* --- Месяц --- */
+.month-calendar-grid {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #dee2e6;
+}
+.month-calendar-weekdays,
+.month-calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.month-calendar-weekday {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+.month-calendar-day {
+    min-height: 110px;
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.35rem;
+    background: #fff;
+}
+.month-calendar-day:nth-child(7n) { border-right: none; }
+.month-calendar-day.other-month { background: #fafafa; }
+.month-calendar-day.other-month .month-calendar-day-num { color: #adb5bd; }
+.month-calendar-day.is-today { background: #e8f0fe; }
+.month-calendar-day.is-weekend:not(.is-today) { background: #fcfcfc; }
+.month-calendar-day-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+.month-calendar-day-num {
+    font-size: 0.8rem;
+    font-weight: 500;
+    width: 1.6rem;
+    height: 1.6rem;
+    line-height: 1.6rem;
+    text-align: center;
+    border-radius: 50%;
+    display: inline-block;
+}
+.month-calendar-day-num.today-badge {
+    background: #1a73e8;
+    color: #fff !important;
+    font-weight: 600;
+}
+.month-calendar-add-day {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.month-calendar-day:hover .month-calendar-add-day { opacity: 1; }
+.month-calendar-events { display: flex; flex-direction: column; gap: 2px; }
+.month-calendar-event {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1.25;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #1a73e8;
+    color: #fff !important;
+    text-decoration: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.month-calendar-event:hover { background: #1557b0; color: #fff !important; }
+.month-calendar-event.is-cancelled {
+    background: #9aa0a6;
+    text-decoration: line-through;
+    opacity: 0.85;
+}
+.month-calendar-event-time { font-weight: 600; margin-right: 4px; }
+
+/* --- Неделя / день (временная сетка) --- */
+.time-grid-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height:  min(720px, 70vh);
+}
+.time-grid-header {
+    display: grid;
+    grid-template-columns: 56px repeat(7, minmax(80px, 1fr));
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.time-grid-header-day {
+    grid-template-columns: 56px 1fr;
+}
+.time-grid-gutter { border-right: 1px solid #e9ecef; }
+.time-grid-day-head {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    border-right: 1px solid #e9ecef;
+}
+.time-grid-day-head.is-today { background: #e8f0fe; }
+.time-grid-day-link { color: inherit; display: block; }
+.time-grid-weekday {
+    display: block;
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+.time-grid-day-num {
+    display: inline-block;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.4;
+    min-width: 2rem;
+    border-radius: 50%;
+}
+.time-grid-day-num.today-badge {
+    background: #1a73e8;
+    color: #fff;
+}
+.time-grid-day-num-large {
+    display: inline-block;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.2;
+    border-radius: 50%;
+    padding: 0 0.35rem;
+}
+.time-grid-day-head.is-today-wide {
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+.time-grid-body {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    position: relative;
+}
+.time-grid-body-day {
+    grid-template-columns: 56px minmax(200px, 1fr);
+}
+.time-grid-labels {
+    border-right: 1px solid #e9ecef;
+    background: #fafafa;
+}
+.time-grid-hour-label {
+    height: 48px;
+    font-size: 0.65rem;
+    color: #6c757d;
+    text-align: right;
+    padding-right: 6px;
+    padding-top: 2px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #f0f0f0;
+}
+.time-grid-columns {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(80px, 1fr));
+    min-width: 560px;
+}
+.time-grid-columns-single {
+    grid-template-columns: 1fr;
+    min-width: 0;
+}
+.time-grid-column {
+    position: relative;
+    border-right: 1px solid #e9ecef;
+    background: #fff;
+}
+.time-grid-column.is-weekend { background: #fcfcfc; }
+.time-grid-column.is-today { background: #f8fbff; }
+.time-grid-slot {
+    border-bottom: 1px solid #f0f0f0;
+    box-sizing: border-box;
+}
+.time-grid-event {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    z-index: 1;
+    overflow: hidden;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: #1a73e8;
+    color: #fff !important;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+.time-grid-event:hover {
+    background: #1557b0;
+    color: #fff !important;
+    z-index: 2;
+}
+.time-grid-event.is-cancelled {
+    background: #9aa0a6;
+    text-decoration: line-through;
+}
+.time-grid-event-day {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+}
+.time-grid-event-day span { display: block; }
+.time-grid-event-time { font-weight: 700; margin-right: 4px; }
+.time-grid-event-title {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.time-grid-column-add {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.75rem;
+    color: #adb5bd;
+    text-decoration: none;
+    opacity: 0;
+    z-index: 0;
+}
+.time-grid-column:hover .time-grid-column-add { opacity: 1; }
+
+@media (max-width: 768px) {
+    .month-calendar-day { min-height: 72px; }
+    .month-calendar-event-title { display: none; }
+    .time-grid-event-title { display: none; }
+}
+
+/* Компактный режим на главной */
+.crm-calendar--compact .month-calendar-day {
+    min-height: 52px;
+    padding: 0.2rem;
+}
+.crm-calendar--compact .month-calendar-weekday {
+    padding: 0.25rem 0.15rem;
+    font-size: 0.65rem;
+}
+.crm-calendar--compact .month-calendar-day-num {
+    font-size: 0.7rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    line-height: 1.35rem;
+}
+.crm-calendar--compact .month-calendar-event {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    line-height: 1.15;
+}
+.crm-calendar--compact .month-calendar-event-time { display: none; }
+.crm-calendar--compact .calendar-header-title { font-size: 0.9rem; }
+.crm-calendar--compact .time-grid-scroll {
+    max-height: min(380px, 55vh);
+}
+.crm-calendar--compact .time-grid-hour-label {
+    height: 36px;
+    font-size: 0.6rem;
+}
+.crm-calendar--compact .time-grid-slot {
+    height: 36px !important;
+}
+.crm-calendar--compact .time-grid-event {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+}
+.crm-calendar--compact .time-grid-day-num {
+    font-size: 1rem;
+}
+.crm-calendar--compact .time-grid-header {
+    grid-template-columns: 44px repeat(7, minmax(56px, 1fr));
+}
+.crm-calendar--compact .time-grid-body {
+    grid-template-columns: 44px 1fr;
+}
+.crm-calendar--compact .time-grid-columns {
+    grid-template-columns: repeat(7, minmax(56px, 1fr));
+    min-width: 420px;
+}
+</style>

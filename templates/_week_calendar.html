@@ -1,0 +1,45 @@
+<div class="time-grid time-grid-week">
+    <div class="time-grid-header">
+        <div class="time-grid-gutter"></div>
+        {% for day in calendar_view.days %}
+        <div class="time-grid-day-head {% if day.is_today %}is-today{% endif %}">
+            <a href="{{ calendar_url_day_base }}?cal_view=day&amp;cal_date={{ day.date_iso }}{% if calendar_extra_qs %}&amp;{{ calendar_extra_qs }}{% endif %}"
+               class="time-grid-day-link text-decoration-none">
+                <span class="time-grid-weekday">{{ day.weekday_short }}</span>
+                <span class="time-grid-day-num {% if day.is_today %}today-badge{% endif %}">{{ day.day }}</span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="time-grid-scroll">
+        <div class="time-grid-body" style="height: {{ calendar_view.grid_height_px }}px;">
+            <div class="time-grid-labels" style="height: {{ calendar_view.grid_height_px }}px;">
+                {% for label in calendar_view.hour_labels %}
+                <div class="time-grid-hour-label">{{ label }}</div>
+                {% endfor %}
+            </div>
+            <div class="time-grid-columns">
+                {% for day in calendar_view.days %}
+                <div class="time-grid-column {% if day.is_today %}is-today{% endif %} {% if day.is_weekend %}is-weekend{% endif %}"
+                     style="height: {{ calendar_view.grid_height_px }}px;">
+                    {% for h in calendar_view.hours %}
+                    <div class="time-grid-slot" style="height: {{ calendar_view.px_per_hour }}px;"></div>
+                    {% endfor %}
+                    {% for ev in day.timed_events %}
+                    <a href="{% if ev.client_id %}{{ url_for('client_detail', client_id=ev.client_id) }}{% else %}{{ url_for('appointment_new') }}?date={{ ev.date_iso }}{% endif %}"
+                       class="time-grid-event {% if ev.cancelled %}is-cancelled{% endif %}"
+                       style="top: {{ ev.top_px }}px; height: {{ ev.height_px }}px;"
+                       title="{{ ev.start_time }}–{{ ev.end_time }} {{ ev.label }}">
+                        <span class="time-grid-event-time">{{ ev.start_time }}</span>
+                        <span class="time-grid-event-title">{{ ev.label }}</span>
+                    </a>
+                    {% endfor %}
+                    <a class="time-grid-column-add"
+                       href="{{ url_for('appointment_new') }}?date={{ day.date_iso }}"
+                       title="Новая запись на этот день">+</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

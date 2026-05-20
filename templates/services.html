@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Каталог услуг{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Каталог услуг</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">← Клиенты</a>
+</div>
+
+<p class="text-muted small">Услуги подставляются при создании записи: название, цена и длительность.</p>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="list-group list-group-flush border rounded">
+            {% for s in services %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <strong>{{ s.name }}</strong>
+                    <div class="small text-muted">{{ '%.0f'|format(s.price) }} ₽ · {{ s.duration_minutes }} мин</div>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('appointment_new', service_id=s.id) }}" class="btn btn-sm btn-outline-primary">Запись</a>
+                    <form method="POST" action="{{ url_for('delete_catalog_service', service_id=s.id) }}"
+                          onsubmit="return confirm('Удалить услугу «{{ s.name }}»?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">×</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="list-group-item text-muted small">Пока нет услуг — добавьте справа.</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header py-2"><strong class="small">Новая услуга</strong></div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label class="form-label small">Название *</label>
+                        <input type="text" name="name" class="form-control form-control-sm" required maxlength="200"
+                               placeholder="Например: Урок 60 мин">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small">Цена, ₽ *</label>
+                            <input type="number" name="price" class="form-control form-control-sm" min="0" step="0.01" value="0" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Длительность, мин *</label>
+                            <input type="number" name="duration_minutes" class="form-control form-control-sm" min="5" max="1440" value="60" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Добавить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

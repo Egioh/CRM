@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Входящие{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Входящие</h1>
+    <div>
+        <a href="{{ url_for('integrations') }}" class="btn btn-outline-secondary">Интеграции</a>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Клиенты</a>
+    </div>
+</div>
+
+{% if not current_user.whatsapp_phone_number_id %}
+<div class="alert alert-warning">Для WhatsApp укажите Phone number ID в разделе <a href="{{ url_for('integrations') }}">Интеграции</a>, иначе сообщения не будут привязаны к вашему аккаунту.</div>
+{% endif %}
+
+<p class="text-muted">Сообщения из Telegram привязываются автоматически только если в системе <strong>ровно один</strong> пользователь.</p>
+
+<div class="list-group">
+    {% for m in messages %}
+    <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1">{{ m.channel }} · {{ m.external_sender_id }}</h6>
+            <small>{{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+        </div>
+        <p class="mb-1">{{ m.body or '—' }}</p>
+        {% if m.client_id %}
+        <a href="{{ url_for('client_detail', client_id=m.client_id) }}" class="btn btn-sm btn-outline-primary">Карточка клиента</a>
+        {% else %}
+        <small class="text-muted">Клиент не привязан — проверьте интеграции</small>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-0">Пока нет входящих сообщений для вашего аккаунта.</div>
+    {% endfor %}
+</div>
+{% endblock %}

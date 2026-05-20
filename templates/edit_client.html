@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    {% if client %}Редактирование клиента{% else %}Добавление клиента{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Имя *</label>
+                                <input type="text" name="name" class="form-control" 
+                                       value="{{ client.name if client }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Телефон</label>
+                                <input type="tel" name="phone" class="form-control" 
+                                       value="{{ client.phone if client }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select name="status_id" class="form-select">
+                            {% for s in statuses %}
+                            <option value="{{ s.id }}"
+                                {% if client and client.status_id == s.id %}selected{% elif not client and loop.first %}selected{% endif %}>
+                                {{ s.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" 
+                               value="{{ client.email if client }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Примечания</label>
+                        <textarea name="notes" class="form-control" rows="4">{{ client.notes if client }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if client %}Сохранить{% else %}Добавить{% endif %}
+                        </button>
+                        <a href="{% if client %}{{ url_for('client_detail', client_id=client.id) }}{% else %}{{ url_for('index') }}{% endif %}" 
+                           class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

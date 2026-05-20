@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Регистрация бизнеса</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Пароль</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Название бизнеса</label>
+                        <input type="text" name="business_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип бизнеса</label>
+                        <select name="business_type" class="form-control" required>
+                            <option value="">Выберите тип бизнеса</option>
+                            <option value="Маникюрный салон">Маникюрный салон</option>
+                            <option value="Ремонт телефонов">Ремонт телефонов</option>
+                            <option value="Автосервис">Автосервис</option>
+                            <option value="Парикмахерская">Парикмахерская</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание бизнеса</label>
+                        <textarea name="business_description" class="form-control" rows="3" 
+                                  placeholder="Опишите основные услуги, специфику работы..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('login') }}">Уже есть аккаунт? Войдите</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

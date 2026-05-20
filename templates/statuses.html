@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Статусы клиентов{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Статусы клиентов</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">← К списку</a>
+</div>
+
+<p class="text-muted">Статусы отображаются в таблице клиентов. Можно добавить свои (например «На согласовании», «Доставка»).</p>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="list-group mb-4">
+            {% for s in statuses %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <span class="badge bg-{{ s.color }} me-2">{{ s.name }}</span>
+                    <small class="text-muted">порядок {{ s.position }}</small>
+                </span>
+                <form method="POST" action="{{ url_for('delete_status', status_id=s.id) }}"
+                      onsubmit="return confirm('Удалить статус «{{ s.name }}»?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Новый статус</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" name="name" class="form-control" required maxlength="80"
+                               placeholder="Например: Ожидает запчасти">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Цвет метки</label>
+                        <select name="color" class="form-select">
+                            <option value="secondary">Серый</option>
+                            <option value="primary">Синий</option>
+                            <option value="info">Голубой</option>
+                            <option value="success">Зелёный</option>
+                            <option value="warning">Жёлтый</option>
+                            <option value="danger">Красный</option>
+                            <option value="dark">Тёмный</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Добавить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

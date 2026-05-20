@@ -1,0 +1,42 @@
+<div class="month-calendar-grid">
+    <div class="month-calendar-weekdays">
+        {% for wd in calendar_view.weekday_headers %}
+        <div class="month-calendar-weekday">{{ wd }}</div>
+        {% endfor %}
+    </div>
+    {% for week in calendar_view.weeks %}
+    <div class="month-calendar-week">
+        {% for cell in week %}
+        <div class="month-calendar-day {% if not cell.in_month %}other-month{% endif %} {% if cell.is_today %}is-today{% endif %} {% if cell.is_weekend %}is-weekend{% endif %}">
+            <div class="month-calendar-day-top">
+                {% if cell.in_month %}
+                <a href="{{ calendar_url_day_base }}?cal_view=day&amp;cal_date={{ cell.date.isoformat() }}{% if calendar_extra_qs %}&amp;{{ calendar_extra_qs }}{% endif %}"
+                   class="month-calendar-day-num {% if cell.is_today %}today-badge{% endif %} text-decoration-none {% if not cell.is_today %}text-dark{% endif %}">{{ cell.day }}</a>
+                {% else %}
+                <span class="month-calendar-day-num text-muted">{{ cell.day }}</span>
+                {% endif %}
+                {% if cell.in_month and cell.appointment_count == 0 %}
+                <a class="month-calendar-add-day"
+                   href="{{ url_for('appointment_new') }}?date={{ cell.date.isoformat() }}"
+                   title="Новая запись">+</a>
+                {% endif %}
+            </div>
+            <div class="month-calendar-events">
+                {% for ev in cell.appointments[:4] %}
+                <a href="{% if ev.client_id %}{{ url_for('client_detail', client_id=ev.client_id) }}{% else %}{{ url_for('appointment_new') }}?date={{ cell.date.isoformat() }}{% endif %}"
+                   class="month-calendar-event {% if ev.cancelled %}is-cancelled{% endif %}"
+                   title="{{ ev.start_time }}–{{ ev.end_time }} {{ ev.label }}">
+                    <span class="month-calendar-event-time">{{ ev.start_time }}</span>
+                    <span class="month-calendar-event-title">{{ ev.label }}</span>
+                </a>
+                {% endfor %}
+                {% if cell.appointment_count > 4 %}
+                <a href="{{ calendar_url_day_base }}?cal_view=day&amp;cal_date={{ cell.date.isoformat() }}{% if calendar_extra_qs %}&amp;{{ calendar_extra_qs }}{% endif %}"
+                   class="month-calendar-more small text-muted">+{{ cell.appointment_count - 4 }}</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
