@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+import json
 
 db = SQLAlchemy()
 
@@ -16,6 +18,23 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # WhatsApp Cloud API: metadata.phone_number_id в вебхуке — сопоставление с владельцем CRM
     whatsapp_phone_number_id = db.Column(db.String(64), nullable=True, unique=True)
+    # Telegram AI bot per tenant (each CRM user uses their own BotFather token)
+    telegram_ai_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    telegram_bot_token = db.Column(db.String(128), nullable=True)
+    telegram_webhook_token = db.Column(db.String(64), nullable=True, unique=True, index=True)
+    telegram_ai_language = db.Column(db.String(16), nullable=False, default="auto")  # ru/en/cs/auto
+    telegram_ai_tone = db.Column(db.String(32), nullable=False, default="friendly")  # neutral/friendly/premium/formal
+    telegram_ai_timezone = db.Column(db.String(64), nullable=False, default="UTC")
+    telegram_ai_display_name = db.Column(db.String(120), nullable=True)
+    telegram_ai_working_hours_json = db.Column(db.Text, nullable=True)  # JSON: weekday -> [["09:00","18:00"], ...]
+    telegram_ai_slot_minutes = db.Column(db.Integer, nullable=False, default=30)
+    telegram_ai_min_duration_minutes = db.Column(db.Integer, nullable=False, default=30)
+    telegram_ai_require_name = db.Column(db.Boolean, nullable=False, default=True)
+    telegram_ai_require_phone = db.Column(db.Boolean, nullable=False, default=True)
+    telegram_ai_service_aliases_json = db.Column(db.Text, nullable=True)  # JSON dict: alias -> service name
+    telegram_ai_handoff_triggers = db.Column(db.Text, nullable=True)  # one per line
+    telegram_ai_handoff_sla_text = db.Column(db.String(200), nullable=True)
+    telegram_ai_gdpr_text = db.Column(db.String(400), nullable=True)
 
     clients = db.relationship('Client', backref='user', lazy=True)
 
@@ -24,6 +43,32 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def ensure_telegram_webhook_token(self) -> str:
+        if self.telegram_webhook_token:
+            return self.telegram_webhook_token
+        self.telegram_webhook_token = uuid.uuid4().hex
+        return self.telegram_webhook_token
+
+    def telegram_service_aliases(self) -> dict[str, str]:
+        raw = (self.telegram_ai_service_aliases_json or "").strip()
+        if not raw:
+            return {}
+        try:
+            v = json.loads(raw)
+            return v if isinstance(v, dict) else {}
+        except Exception:
+            return {}
+
+    def telegram_working_hours(self) -> dict[str, list[list[str]]]:
+        raw = (self.telegram_ai_working_hours_json or "").strip()
+        if not raw:
+            return {}
+        try:
+            v = json.loads(raw)
+            return v if isinstance(v, dict) else {}
+        except Exception:
+            return {}
 
 class ClientStatus(db.Model):
     """Статус воронки клиента; владелец может добавлять свои."""
@@ -182,3 +227,24 @@ class Appointment(db.Model):
     user = db.relationship('User', backref=db.backref('appointments', lazy='dynamic'))
     client = db.relationship('Client', backref=db.backref('appointments', lazy='dynamic'))
     catalog_service = db.relationship('CatalogService', backref='appointments')
+
+
+class TelegramConversationState(db.Model):
+    """State machine for Telegram AI conversation per tenant + chat."""
+
+    __tablename__ = "telegram_conversation_state"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    telegram_chat_id = db.Column(db.String(64), nullable=False, index=True)
+    state = db.Column(db.String(40), nullable=False, default="idle")
+    payload_json = db.Column(db.Text, nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("telegram_states", lazy="dynamic"))
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "telegram_chat_id", name="uq_tg_state_user_chat"),
+    )

@@ -24,12 +24,162 @@
         </div>
 
         <div class="card mb-4">
+            <div class="card-header"><strong>Telegram AI‑бот (отдельный бот для каждого бизнеса)</strong></div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Арендатор создаёт бота в BotFather и вставляет токен. После сохранения получите уникальный URL вебхука
+                    (только для этого аккаунта) и подключите его через <code>setWebhook</code>.
+                </p>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="whatsapp_phone_number_id" value="{{ current_user.whatsapp_phone_number_id or '' }}">
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="telegram_ai_enabled" name="telegram_ai_enabled"
+                               {% if current_user.telegram_ai_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="telegram_ai_enabled">
+                            Включить AI‑бота (требуется токен бота)
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Telegram Bot Token</label>
+                        <input type="text" name="telegram_bot_token" class="form-control"
+                               value="{{ current_user.telegram_bot_token or '' }}"
+                               placeholder="123456:ABCDEF...">
+                        <div class="form-text">Хранится в вашей БД. Не публикуйте токен и не коммитьте его в git.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Как представляться</label>
+                            <input type="text" name="telegram_ai_display_name" class="form-control"
+                                   value="{{ current_user.telegram_ai_display_name or '' }}"
+                                   placeholder="Администратор / Онлайн‑запись">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Часовой пояс</label>
+                            <input type="text" name="telegram_ai_timezone" class="form-control"
+                                   value="{{ current_user.telegram_ai_timezone or 'UTC' }}"
+                                   placeholder="Europe/Prague">
+                            <div class="form-text">Примеры: <code>Europe/Moscow</code>, <code>Europe/Prague</code>.</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Язык</label>
+                            <select name="telegram_ai_language" class="form-select">
+                                {% set lang = current_user.telegram_ai_language or 'auto' %}
+                                <option value="auto" {% if lang=='auto' %}selected{% endif %}>auto</option>
+                                <option value="ru" {% if lang=='ru' %}selected{% endif %}>ru</option>
+                                <option value="en" {% if lang=='en' %}selected{% endif %}>en</option>
+                                <option value="cs" {% if lang=='cs' %}selected{% endif %}>cs</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Тон</label>
+                            {% set tone = current_user.telegram_ai_tone or 'friendly' %}
+                            <select name="telegram_ai_tone" class="form-select">
+                                <option value="neutral" {% if tone=='neutral' %}selected{% endif %}>neutral</option>
+                                <option value="friendly" {% if tone=='friendly' %}selected{% endif %}>friendly</option>
+                                <option value="premium" {% if tone=='premium' %}selected{% endif %}>premium</option>
+                                <option value="formal" {% if tone=='formal' %}selected{% endif %}>formal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="telegram_ai_require_name" name="telegram_ai_require_name"
+                                       {% if current_user.telegram_ai_require_name %}checked{% endif %}>
+                                <label class="form-check-label" for="telegram_ai_require_name">Запрашивать имя</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="telegram_ai_require_phone" name="telegram_ai_require_phone"
+                                       {% if current_user.telegram_ai_require_phone %}checked{% endif %}>
+                                <label class="form-check-label" for="telegram_ai_require_phone">Запрашивать телефон</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Шаг слотов (мин)</label>
+                            <input type="number" name="telegram_ai_slot_minutes" class="form-control"
+                                   value="{{ current_user.telegram_ai_slot_minutes or 30 }}"
+                                   min="5" max="120" step="5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Мин. длительность (мин)</label>
+                            <input type="number" name="telegram_ai_min_duration_minutes" class="form-control"
+                                   value="{{ current_user.telegram_ai_min_duration_minutes or 30 }}"
+                                   min="5" max="1440" step="5">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Рабочие часы (JSON, опционально)</label>
+                        <textarea name="telegram_ai_working_hours_json" class="form-control" rows="4"
+                                  placeholder='{"mon":[["09:00","18:00"]],"tue":[["09:00","18:00"]],"wed":[["09:00","18:00"]],"thu":[["09:00","18:00"]],"fri":[["09:00","18:00"]],"sat":[["10:00","16:00"]],"sun":[]}'>{{ current_user.telegram_ai_working_hours_json or '' }}</textarea>
+                        <div class="form-text">Ключи: <code>mon..sun</code>. Значение: список интервалов <code>["HH:MM","HH:MM"]</code>.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Алиасы услуг (JSON, опционально)</label>
+                        <textarea name="telegram_ai_service_aliases_json" class="form-control" rows="3"
+                                  placeholder='{"маник":"Маникюр","стрижка":"Стрижка"}'>{{ current_user.telegram_ai_service_aliases_json or '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">GDPR / согласие (опционально)</label>
+                        <input type="text" name="telegram_ai_gdpr_text" class="form-control"
+                               value="{{ current_user.telegram_ai_gdpr_text or '' }}"
+                               placeholder="Мы сохраним ваши данные для записи и связи.">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Триггеры передачи человеку (по строке)</label>
+                        <textarea name="telegram_ai_handoff_triggers" class="form-control" rows="3"
+                                  placeholder="хочу человека&#10;позвоните">{{ current_user.telegram_ai_handoff_triggers or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Текст при передаче человеку</label>
+                        <input type="text" name="telegram_ai_handoff_sla_text" class="form-control"
+                               value="{{ current_user.telegram_ai_handoff_sla_text or '' }}"
+                               placeholder="Передам администратору, он ответит в ближайшее время.">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="mb-2"><strong>Webhook URL</strong></div>
+                {% if current_user.telegram_webhook_token and current_user.telegram_ai_enabled %}
+                    <div class="mb-2">
+                        <code>{{ request.url_root }}webhooks/telegram/{{ current_user.telegram_webhook_token }}</code>
+                    </div>
+                    <div class="text-muted">
+                        Подключение (пример):
+                        <code>https://api.telegram.org/bot&lt;TOKEN&gt;/setWebhook?url={{ request.url_root }}webhooks/telegram/{{ current_user.telegram_webhook_token }}</code>
+                    </div>
+                {% else %}
+                    <div class="text-muted">Включите бота и сохраните токен — появится URL вебхука.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-header"><strong>URL вебхуков</strong></div>
             <div class="card-body">
                 <p>Используйте свой публичный домен (HTTPS):</p>
                 <ul>
                     <li><code>{{ request.url_root }}webhooks/whatsapp</code></li>
-                    <li><code>{{ request.url_root }}webhooks/telegram</code></li>
+                    <li><code>{{ request.url_root }}webhooks/telegram</code> <span class="text-muted">(старый общий endpoint)</span></li>
                 </ul>
                 <p class="mb-0">Полная пошаговая инструкция лежит в репозитории: <code>docs/MESSAGING_SETUP_RU.md</code>.</p>
             </div>

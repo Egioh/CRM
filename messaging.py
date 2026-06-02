@@ -20,13 +20,16 @@ from client_linking import (
     find_or_create_client_for_telegram,
     find_or_create_client_for_whatsapp,
 )
+from messaging_outbound import send_telegram_raw
 from models import InboundMessage, User, db
+from telegram_ai import handle_tenant_update
 
 bp = Blueprint("messaging", __name__, url_prefix="/webhooks")
 
 MESSAGING_CSRF_EXEMPT_ENDPOINTS = (
     "messaging.whatsapp_webhook",
     "messaging.telegram_webhook",
+    "messaging.telegram_tenant_webhook",
 )
 
 
@@ -234,5 +237,85 @@ def telegram_webhook():
     except Exception:
         db.session.rollback()
         current_app.logger.exception("telegram persist failed")
+
+    return jsonify({"ok": True}), 200
+
+
+@bp.route("/telegram/<webhook_token>", methods=["POST"])
+def telegram_tenant_webhook(webhook_token: str):
+    """Per-tenant Telegram webhook. Each tenant uses their own bot + webhook secret token in URL."""
+    token = (webhook_token or "").strip()
+    if not token:
+        abort(404)
+    user = User.query.filter_by(telegram_webhook_token=token).first()
+    if not user or not user.telegram_ai_enabled or not user.telegram_bot_token:
+        abort(404)
+
+    try:
+        data = request.get_json(force=True, silent=False)
+    except Exception:
+        abort(400)
+    if not isinstance(data, dict):
+        abort(400)
+
+    _log_incoming("telegram_tenant", data)
+
+    # Persist inbound (best effort)
+    try:
+        msg = data.get("message") or data.get("edited_message")
+        cb = data.get("callback_query")
+        payload_msg = msg if isinstance(msg, dict) else None
+        if isinstance(cb, dict) and isinstance(cb.get("message"), dict):
+            payload_msg = cb.get("message")
+        if payload_msg:
+            chat = payload_msg.get("chat") or {}
+            chat_id = str(chat.get("id") or "")
+            from_user = ((payload_msg.get("from") or {}).get("id")) or None
+            text_body = payload_msg.get("text") or payload_msg.get("caption") or ""
+            if not isinstance(text_body, str):
+                text_body = str(text_body)
+            try:
+                raw = json.dumps(data, ensure_ascii=False)[:20000]
+            except Exception:
+                raw = "{}"
+            row = InboundMessage(
+                user_id=user.id,
+                channel="telegram",
+                external_sender_id=str(from_user or ""),
+                external_chat_id=chat_id,
+                wa_phone_number_id=None,
+                body=text_body,
+                raw_json=raw,
+            )
+            if chat_id:
+                from_data = payload_msg.get("from") or {}
+                display_name = (from_data.get("first_name") or "").strip()
+                last = from_data.get("last_name")
+                if last:
+                    display_name = f"{display_name} {last}".strip()
+                if not display_name:
+                    display_name = None
+                client = find_or_create_client_for_telegram(
+                    user.id, chat_id, display_name=display_name
+                )
+                row.client_id = client.id
+            db.session.add(row)
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("telegram tenant persist failed")
+
+    # AI reply (best effort)
+    try:
+        chat_id, text, reply_markup = handle_tenant_update(user, data)
+        if chat_id and text:
+            send_telegram_raw(
+                bot_token=user.telegram_bot_token,
+                chat_id=chat_id,
+                text=text,
+                reply_markup=reply_markup,
+            )
+    except Exception:
+        current_app.logger.exception("telegram tenant AI failed")
 
     return jsonify({"ok": True}), 200

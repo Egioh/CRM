@@ -697,6 +697,36 @@ def integrations():
             current_user.whatsapp_phone_number_id = wa_pid
         else:
             current_user.whatsapp_phone_number_id = None
+        # Telegram AI bot settings (per tenant)
+        tg_enabled = (request.form.get("telegram_ai_enabled") or "").lower() in {"1", "true", "yes", "on"}
+        tg_token = (request.form.get("telegram_bot_token") or "").strip()
+        current_user.telegram_ai_enabled = bool(tg_enabled and tg_token)
+        current_user.telegram_bot_token = tg_token or None
+        if current_user.telegram_ai_enabled:
+            current_user.ensure_telegram_webhook_token()
+        lang = (request.form.get("telegram_ai_language") or "auto").strip()[:16]
+        tone = (request.form.get("telegram_ai_tone") or "friendly").strip()[:32]
+        tz = (request.form.get("telegram_ai_timezone") or "UTC").strip()[:64]
+        current_user.telegram_ai_language = lang or "auto"
+        current_user.telegram_ai_tone = tone or "friendly"
+        current_user.telegram_ai_timezone = tz or "UTC"
+        current_user.telegram_ai_display_name = (request.form.get("telegram_ai_display_name") or "").strip()[:120] or None
+        current_user.telegram_ai_require_name = (request.form.get("telegram_ai_require_name") or "").lower() in {"1", "true", "yes", "on"}
+        current_user.telegram_ai_require_phone = (request.form.get("telegram_ai_require_phone") or "").lower() in {"1", "true", "yes", "on"}
+        wh = (request.form.get("telegram_ai_working_hours_json") or "").strip()
+        current_user.telegram_ai_working_hours_json = wh or None
+        slot_minutes = request.form.get("telegram_ai_slot_minutes", type=int)
+        if slot_minutes and 5 <= slot_minutes <= 120:
+            current_user.telegram_ai_slot_minutes = slot_minutes
+        min_dur = request.form.get("telegram_ai_min_duration_minutes", type=int)
+        if min_dur and 5 <= min_dur <= 24 * 60:
+            current_user.telegram_ai_min_duration_minutes = min_dur
+        aliases = (request.form.get("telegram_ai_service_aliases_json") or "").strip()
+        current_user.telegram_ai_service_aliases_json = aliases or None
+        current_user.telegram_ai_handoff_triggers = (request.form.get("telegram_ai_handoff_triggers") or "").strip() or None
+        current_user.telegram_ai_handoff_sla_text = (request.form.get("telegram_ai_handoff_sla_text") or "").strip()[:200] or None
+        current_user.telegram_ai_gdpr_text = (request.form.get("telegram_ai_gdpr_text") or "").strip()[:400] or None
+
         db.session.commit()
         flash('Настройки интеграций сохранены', 'success')
         return redirect(url_for('integrations'))
