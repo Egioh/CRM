@@ -110,6 +110,45 @@ def test_appointment_create_and_overlap(client):
         assert Appointment.query.count() == 1
 
 
+def test_appointment_edit(client):
+    _register(client, email="edit@test.com")
+    client.post(
+        "/appointment/new",
+        data={
+            "title": "Стрижка",
+            "client_id": "",
+            "start_at": "2030-05-10T14:00",
+            "end_at": "2030-05-10T15:00",
+            "notes": "было",
+        },
+        follow_redirects=True,
+    )
+    with app.app_context():
+        ap = Appointment.query.one()
+        aid = ap.id
+        cid = ap.client_id
+
+    r = client.post(
+        f"/appointment/{aid}/edit",
+        data={
+            "title": "Стрижка + укладка",
+            "client_id": cid or "",
+            "start_at": "2030-05-10T16:00",
+            "end_at": "2030-05-10T17:00",
+            "notes": "стало",
+            "status": "scheduled",
+            "return_to": "calendar",
+        },
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    with app.app_context():
+        updated = Appointment.query.get(aid)
+        assert updated.title == "Стрижка + укладка"
+        assert updated.notes == "стало"
+        assert updated.start_at.hour == 16
+
+
 def test_appointment_cancel(client):
     _register(client, email="c2@test.com")
     client.post(

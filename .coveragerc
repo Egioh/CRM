@@ -1,0 +1,28 @@
+[run]
+source =
+    app.py
+    models.py
+    client_helpers.py
+    reports_helpers.py
+    calendar_helpers.py
+    appointment_helpers.py
+    messaging.py
+    messaging_outbound.py
+    telegram_ai.py
+    i18n.py
+    phone_utils.py
+    public_url.py
+    client_linking.py
+    status_defaults.py
+    schema_migrations.py
+omit =
+    tests/*
+    scripts/*
+    wsgi.py
+    deepseek_extract.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError

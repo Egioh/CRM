@@ -10,6 +10,42 @@ import requests
 from models import Client, User
 
 
+def telegram_https_proxy() -> Optional[str]:
+    """Прокси только для Telegram API (обход блокировки api.telegram.org)."""
+    return (
+        os.getenv("TELEGRAM_HTTPS_PROXY", "").strip()
+        or os.getenv("HTTPS_PROXY", "").strip()
+        or None
+    )
+
+
+def _telegram_request_kwargs() -> dict[str, Any]:
+    proxy = telegram_https_proxy()
+    kwargs: dict[str, Any] = {"timeout": (8, 25)}
+    if proxy:
+        kwargs["proxies"] = {"http": proxy, "https": proxy}
+    return kwargs
+
+
+def check_telegram_api(bot_token: str) -> tuple[bool, str]:
+    """Проверка: с этого ПК доступен ли api.telegram.org для исходящих ответов бота."""
+    if not bot_token:
+        return False, "Токен бота не задан"
+    url = f"https://api.telegram.org/bot{bot_token}/getMe"
+    try:
+        r = requests.get(url, **_telegram_request_kwargs())
+        data = r.json()
+        if r.status_code == 200 and data.get("ok"):
+            username = (data.get("result") or {}).get("username") or "?"
+            return True, f"@{username}"
+        return False, data.get("description") or f"HTTP {r.status_code}"
+    except requests.RequestException:
+        hint = "api.telegram.org недоступен с этого ПК"
+        if not telegram_https_proxy():
+            hint += " — задайте TELEGRAM_HTTPS_PROXY в .env (VPN/прокси) или деплой на VPS"
+        return False, hint
+
+
 def send_telegram_raw(
     *,
     bot_token: str,
@@ -26,17 +62,21 @@ def send_telegram_raw(
     if reply_markup:
         payload["reply_markup"] = reply_markup
     try:
-        r = requests.post(
-            url,
-            json=payload,
-            timeout=15,
-        )
+        r = requests.post(url, json=payload, **_telegram_request_kwargs())
         data = r.json()
         if r.status_code == 200 and data.get("ok"):
             return True, "Сообщение отправлено в Telegram"
         return False, data.get("description") or f"HTTP {r.status_code}"
-    except requests.RequestException as e:
-        return False, f"Ошибка сети: {e}"
+    except requests.Timeout:
+        return False, (
+            "Таймаут при обращении к api.telegram.org. "
+            "Входящие работают, но ответы с ПК не уходят — нужен VPN/прокси (TELEGRAM_HTTPS_PROXY) или сервер в облаке."
+        )
+    except requests.RequestException:
+        return False, (
+            "Нет связи с api.telegram.org для отправки ответа. "
+            "Настройте TELEGRAM_HTTPS_PROXY в .env или перенесите CRM на VPS/Replit."
+        )
 
 
 def send_telegram_message(

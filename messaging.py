@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import os
+from threading import Thread
 from typing import Any, Optional
 
 from flask import Blueprint, abort, current_app, jsonify, request
@@ -249,6 +250,13 @@ def telegram_tenant_webhook(webhook_token: str):
         abort(404)
     user = User.query.filter_by(telegram_webhook_token=token).first()
     if not user or not user.telegram_ai_enabled or not user.telegram_bot_token:
+        current_app.logger.warning(
+            "telegram_tenant_webhook: reject token=%s… (user=%s ai=%s bot=%s)",
+            token[:8],
+            user.id if user else None,
+            user.telegram_ai_enabled if user else None,
+            bool(user.telegram_bot_token) if user else None,
+        )
         abort(404)
 
     try:
@@ -259,6 +267,11 @@ def telegram_tenant_webhook(webhook_token: str):
         abort(400)
 
     _log_incoming("telegram_tenant", data)
+    current_app.logger.info(
+        "telegram_tenant_webhook: user_id=%s update_id=%s",
+        user.id,
+        data.get("update_id"),
+    )
 
     # Persist inbound (best effort)
     try:
@@ -305,16 +318,37 @@ def telegram_tenant_webhook(webhook_token: str):
         db.session.rollback()
         current_app.logger.exception("telegram tenant persist failed")
 
-    # AI reply (best effort)
+    # AI reply: answer Telegram immediately, sendMessage in background (avoids tunnel timeouts)
     try:
         chat_id, text, reply_markup = handle_tenant_update(user, data)
         if chat_id and text:
-            send_telegram_raw(
-                bot_token=user.telegram_bot_token,
-                chat_id=chat_id,
-                text=text,
-                reply_markup=reply_markup,
-            )
+            app_obj = current_app._get_current_object()
+            bot_token = user.telegram_bot_token
+            user_id = user.id
+
+            def _send_reply() -> None:
+                with app_obj.app_context():
+                    ok, detail = send_telegram_raw(
+                        bot_token=bot_token,
+                        chat_id=chat_id,
+                        text=text,
+                        reply_markup=reply_markup,
+                    )
+                    if ok:
+                        current_app.logger.info(
+                            "telegram_tenant_webhook: sent reply user_id=%s chat_id=%s",
+                            user_id,
+                            chat_id,
+                        )
+                    else:
+                        current_app.logger.error(
+                            "telegram_tenant_webhook: send failed user_id=%s chat_id=%s: %s",
+                            user_id,
+                            chat_id,
+                            detail,
+                        )
+
+            Thread(target=_send_reply, daemon=True).start()
     except Exception:
         current_app.logger.exception("telegram tenant AI failed")
 

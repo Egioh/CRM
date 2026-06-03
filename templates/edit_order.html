@@ -1,46 +1,184 @@
 {% extends "base.html" %}
 
+
+
 {% block content %}
+
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
+
+    <div class="col-md-8">
+
+        <div class="card mb-4">
+
             <div class="card-header">
-                <h4 class="mb-0">Редактирование заказа</h4>
+
+                <h4 class="mb-0">{{ _('Редактирование заказа') }}</h4>
+
             </div>
+
             <div class="card-body">
+
                 <form method="POST">
+
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="mb-3">
-                        <label class="form-label">Услуга *</label>
+
+                        <label class="form-label">{{ _('Услуга *') }}</label>
+
                         <input type="text" name="service" class="form-control" 
+
                                value="{{ order.service }}" required>
+
                     </div>
+
                     
+
                     <div class="mb-3">
-                        <label class="form-label">Цена *</label>
+
+                        <label class="form-label">{{ _('Цена *') }}</label>
+
                         <input type="number" step="0.01" name="price" class="form-control" 
+
                                value="{{ order.price }}" required>
+
                     </div>
+
                     
+
                     <div class="mb-3">
-                        <label class="form-label">Дата и время</label>
-                        <input type="datetime-local" name="date" class="form-control" 
+
+                        <label class="form-label">{{ _('Дата и время') }}</label>
+
+                        <input type="datetime-local" name="date" class="form-control" lang="{{ html_lang }}"
+
                                value="{{ order.date.strftime('%Y-%m-%dT%H:%M') }}">
+
                     </div>
-                    
+
+
+
                     <div class="mb-3">
-                        <label class="form-label">Примечания</label>
-                        <textarea name="notes" class="form-control" rows="3">{{ order.notes }}</textarea>
+
+                        <label class="form-label">{{ _('Ответственный сотрудник') }}</label>
+
+                        <select name="staff_id" class="form-select">
+
+                            <option value="">{{ _('— не назначен —') }}</option>
+
+                            {% for s in staff_list %}
+
+                            <option value="{{ s.id }}" {% if order.staff_id == s.id %}selected{% endif %}>
+
+                                {{ s.name }}{% if s.role_title %} ({{ s.role_title }}){% endif %}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
                     </div>
+
                     
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                        <a href="{{ url_for('client_detail', client_id=order.client_id) }}" 
-                           class="btn btn-secondary">Отмена</a>
+
+                    <div class="mb-3">
+
+                        <label class="form-label">{{ _('Примечания') }}</label>
+
+                        <textarea name="notes" class="form-control" rows="3">{{ order.notes }}</textarea>
+
                     </div>
+
+                    
+
+                    <div class="d-flex gap-2">
+
+                        <button type="submit" class="btn btn-primary">{{ _('Сохранить') }}</button>
+
+                        <a href="{{ url_for('client_detail', client_id=order.client_id) }}" 
+
+                           class="btn btn-secondary">{{ _('Отмена') }}</a>
+
+                    </div>
+
                 </form>
+
             </div>
+
         </div>
+
+
+
+        <div class="card">
+
+            <div class="card-header"><h5 class="mb-0">{{ _('Расходы по заказу') }}</h5></div>
+
+            <div class="card-body">
+
+                <form method="POST" action="{{ url_for('add_order_expense', order_id=order.id) }}" class="row g-2 mb-3">
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="col-md-4">
+
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="{{ _('Сумма') }}" required>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <input type="text" name="description" class="form-control" placeholder="{{ _('Описание') }}">
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <button type="submit" class="btn btn-outline-primary w-100">{{ _('Добавить') }}</button>
+
+                    </div>
+
+                </form>
+
+                {% if order_expenses %}
+
+                <ul class="list-group list-group-flush">
+
+                    {% for e in order_expenses %}
+
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+
+                        <span>{{ e.description }} — <strong>{{ '%.2f'|format(e.amount) }}</strong>
+
+                            <small class="text-muted">{{ e.expense_date.strftime('%d.%m.%Y') }}</small></span>
+
+                        <form method="POST" action="{{ url_for('delete_order_expense', expense_id=e.id) }}">
+
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <button type="submit" class="btn btn-sm btn-outline-danger">×</button>
+
+                        </form>
+
+                    </li>
+
+                    {% endfor %}
+
+                </ul>
+
+                {% else %}
+
+                <p class="text-muted mb-0">{{ _('Расходов по заказу пока нет.') }}</p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
     </div>
+
 </div>
+
 {% endblock %}
+

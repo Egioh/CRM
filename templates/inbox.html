@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Входящие{% endblock %}
+{% block title %}{{ _('Входящие') }}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Входящие</h1>
+    <h1>{{ _('Входящие') }}</h1>
     <div>
-        <a href="{{ url_for('integrations') }}" class="btn btn-outline-secondary">Интеграции</a>
-        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Клиенты</a>
+        <a href="{{ url_for('integrations') }}" class="btn btn-outline-secondary">{{ _('Интеграции') }}</a>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">{{ _('Клиенты') }}</a>
     </div>
 </div>
 
 {% if not current_user.whatsapp_phone_number_id %}
-<div class="alert alert-warning">Для WhatsApp укажите Phone number ID в разделе <a href="{{ url_for('integrations') }}">Интеграции</a>, иначе сообщения не будут привязаны к вашему аккаунту.</div>
+<div class="alert alert-warning">{{ _('Для WhatsApp укажите Phone number ID в разделе') }} <a href="{{ url_for('integrations') }}">{{ _('Интеграции') }}</a>, {{ _('иначе сообщения не будут привязаны к вашему аккаунту.') }}</div>
 {% endif %}
 
-<p class="text-muted">Сообщения из Telegram привязываются автоматически только если в системе <strong>ровно один</strong> пользователь.</p>
+<p class="text-muted">{{ _('Сообщения из Telegram привязываются автоматически только если в системе ровно один пользователь.') }}</p>
 
 <div class="list-group">
     {% for m in messages %}
@@ -24,13 +24,13 @@
         </div>
         <p class="mb-1">{{ m.body or '—' }}</p>
         {% if m.client_id %}
-        <a href="{{ url_for('client_detail', client_id=m.client_id) }}" class="btn btn-sm btn-outline-primary">Карточка клиента</a>
+        <a href="{{ url_for('client_detail', client_id=m.client_id) }}" class="btn btn-sm btn-outline-primary">{{ _('Карточка клиента') }}</a>
         {% else %}
-        <small class="text-muted">Клиент не привязан — проверьте интеграции</small>
+        <small class="text-muted">{{ _('Клиент не привязан — проверьте интеграции') }}</small>
         {% endif %}
     </div>
     {% else %}
-    <div class="alert alert-info mb-0">Пока нет входящих сообщений для вашего аккаунта.</div>
+    <div class="alert alert-info mb-0">{{ _('Пока нет входящих сообщений для вашего аккаунта.') }}</div>
     {% endfor %}
 </div>
 {% endblock %}

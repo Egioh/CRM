@@ -5,4 +5,7 @@ Flask-WTF
 Werkzeug
 requests
 python-dotenv
+waitress
 pytest
+pytest-cov
+psycopg2-binary

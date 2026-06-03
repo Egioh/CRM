@@ -5,24 +5,25 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h4 class="mb-0">Вход в систему</h4>
+                <h4 class="mb-0">{{ _('Вход в систему') }}</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">{{ _('Email') }}</label>
                         <input type="email" name="email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Пароль</label>
+                        <label class="form-label">{{ _('Пароль') }}</label>
                         <input type="password" name="password" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Войти</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Войти') }}</button>
                 </form>
                 <div class="text-center mt-3">
-                    <a href="{{ url_for('register') }}">Нет аккаунта? Зарегистрируйтесь</a>
+                    <a href="{{ url_for('register') }}">{{ _('Нет аккаунта? Зарегистрируйтесь') }}</a>
                 </div>
+                <p class="text-center text-muted small mt-3 mb-0">{{ _('После входа откройте «Помощь» в верхнем меню — там пошаговая инструкция.') }}</p>
             </div>
         </div>
     </div>

@@ -1,16 +1,19 @@
-"""Одноразовые правки схемы SQLite (новые колонки без Alembic)."""
+"""Правки схемы без Alembic: SQLite и PostgreSQL."""
 
 from __future__ import annotations
 
 from sqlalchemy import inspect, text
 
-from models import Appointment, Client, InboundMessage, User, db
+from models import Appointment, Client, InboundMessage, Order, User, db
 
 
-def _sqlite_add_column_if_missing(app, table: str, column: str, ddl: str) -> None:
-    uri = (app.config.get("SQLALCHEMY_DATABASE_URI") or "").lower()
-    if not uri.startswith("sqlite:"):
-        return
+def apply_appointment_staff_column(app) -> None:
+    _sqlite_add_column_if_missing(
+        app, Appointment.__table__.name, "staff_id", "staff_id INTEGER"
+    )
+
+
+def _add_column_if_missing(app, table: str, column: str, ddl: str) -> None:
     try:
         insp = inspect(db.engine)
         existing = {c["name"] for c in insp.get_columns(table)}
@@ -19,27 +22,24 @@ def _sqlite_add_column_if_missing(app, table: str, column: str, ddl: str) -> Non
         with db.engine.begin() as conn:
             conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {ddl}"))
     except Exception:
-        app.logger.exception("sqlite migration failed: %s.%s", table, column)
+        app.logger.exception("migration failed: %s.%s", table, column)
+
+
+def _sqlite_add_column_if_missing(app, table: str, column: str, ddl: str) -> None:
+    uri = (app.config.get("SQLALCHEMY_DATABASE_URI") or "").lower()
+    if not uri.startswith("sqlite:"):
+        _add_column_if_missing(app, table, column, ddl)
+        return
+    _add_column_if_missing(app, table, column, ddl)
 
 
 def apply_sqlite_user_whatsapp_column(app) -> None:
-    uri = (app.config.get("SQLALCHEMY_DATABASE_URI") or "").lower()
-    if not uri.startswith("sqlite:"):
-        return
-    try:
-        insp = inspect(db.engine)
-        t = User.__table__.name
-        existing = {c["name"] for c in insp.get_columns(t)}
-        if "whatsapp_phone_number_id" in existing:
-            return
-        with db.engine.begin() as conn:
-            conn.execute(
-                text(
-                    f"ALTER TABLE {t} ADD COLUMN whatsapp_phone_number_id VARCHAR(64)"
-                )
-            )
-    except Exception:
-        app.logger.exception("apply_sqlite_user_whatsapp_column failed")
+    _sqlite_add_column_if_missing(
+        app,
+        User.__table__.name,
+        "whatsapp_phone_number_id",
+        "whatsapp_phone_number_id VARCHAR(64)",
+    )
 
 
 def apply_sqlite_client_status_id(app) -> None:
@@ -81,7 +81,7 @@ def apply_sqlite_appointment_catalog_columns(app) -> None:
 
 def apply_sqlite_user_telegram_ai_columns(app) -> None:
     t = User.__table__.name
-    _sqlite_add_column_if_missing(app, t, "telegram_ai_enabled", "telegram_ai_enabled BOOLEAN DEFAULT 0")
+    _sqlite_add_column_if_missing(app, t, "telegram_ai_enabled", "telegram_ai_enabled BOOLEAN DEFAULT FALSE")
     _sqlite_add_column_if_missing(app, t, "telegram_bot_token", "telegram_bot_token VARCHAR(128)")
     _sqlite_add_column_if_missing(
         app, t, "telegram_webhook_token", "telegram_webhook_token VARCHAR(64)"
@@ -100,10 +100,10 @@ def apply_sqlite_user_telegram_ai_columns(app) -> None:
         app, t, "telegram_ai_min_duration_minutes", "telegram_ai_min_duration_minutes INTEGER"
     )
     _sqlite_add_column_if_missing(
-        app, t, "telegram_ai_require_name", "telegram_ai_require_name BOOLEAN DEFAULT 1"
+        app, t, "telegram_ai_require_name", "telegram_ai_require_name BOOLEAN DEFAULT TRUE"
     )
     _sqlite_add_column_if_missing(
-        app, t, "telegram_ai_require_phone", "telegram_ai_require_phone BOOLEAN DEFAULT 1"
+        app, t, "telegram_ai_require_phone", "telegram_ai_require_phone BOOLEAN DEFAULT TRUE"
     )
     _sqlite_add_column_if_missing(
         app, t, "telegram_ai_service_aliases_json", "telegram_ai_service_aliases_json TEXT"
@@ -119,9 +119,22 @@ def apply_sqlite_user_telegram_ai_columns(app) -> None:
     )
 
 
+def apply_user_role_columns(app) -> None:
+    t = User.__table__.name
+    _sqlite_add_column_if_missing(app, t, "role", "role VARCHAR(20) DEFAULT 'owner'")
+    _sqlite_add_column_if_missing(app, t, "owner_id", "owner_id INTEGER")
+
+
+def apply_order_staff_column(app) -> None:
+    _sqlite_add_column_if_missing(app, Order.__table__.name, "staff_id", "staff_id INTEGER")
+
+
 def apply_all_sqlite_migrations(app) -> None:
     apply_sqlite_user_whatsapp_column(app)
     apply_sqlite_user_telegram_ai_columns(app)
+    apply_user_role_columns(app)
+    apply_order_staff_column(app)
+    apply_appointment_staff_column(app)
     apply_sqlite_client_status_id(app)
     apply_sqlite_client_telegram_chat_id(app)
     apply_sqlite_inbound_client_id(app)

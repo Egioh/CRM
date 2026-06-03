@@ -6,6 +6,7 @@ from calendar import monthrange
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
+from i18n import get_calendar_locale
 from models import Appointment
 
 MONTH_NAMES_RU = (
@@ -61,8 +62,9 @@ def _today() -> date:
     return datetime.utcnow().date()
 
 
-def format_date_short(d: date) -> str:
-    return f"{d.day} {MONTH_NAMES_GENITIVE[d.month]}"
+def format_date_short(d: date, *, lang: str = "ru") -> str:
+    loc = get_calendar_locale(lang)
+    return f"{d.day} {loc.month_gen[d.month]}"
 
 
 def parse_cal_view(raw: str | None) -> str:
@@ -203,14 +205,22 @@ def _layout_timed_event(ap: Appointment, day: date) -> dict[str, Any]:
     return ev
 
 
-def _day_column(user_id: int, day: date, apps: list[Appointment], today: date) -> dict[str, Any]:
+def _day_column(
+    user_id: int,
+    day: date,
+    apps: list[Appointment],
+    today: date,
+    *,
+    lang: str = "ru",
+) -> dict[str, Any]:
+    loc = get_calendar_locale(lang)
     day_apps = [ap for ap in apps if ap.start_at.date() == day]
     return {
         "date": day,
         "date_iso": day.isoformat(),
         "day": day.day,
-        "weekday_short": WEEKDAY_HEADERS_RU[day.weekday()],
-        "weekday_full": WEEKDAY_FULL_RU[day.weekday()],
+        "weekday_short": loc.weekday_short[day.weekday()],
+        "weekday_full": loc.weekday_full[day.weekday()],
         "is_today": day == today,
         "is_weekend": day.weekday() >= 5,
         "timed_events": [_layout_timed_event(ap, day) for ap in day_apps],
@@ -224,6 +234,7 @@ def build_month_calendar(
     month: int,
     *,
     today: date | None = None,
+    lang: str = "ru",
 ) -> dict[str, Any]:
     if today is None:
         today = _today()
@@ -263,14 +274,15 @@ def build_month_calendar(
             cursor += timedelta(days=1)
         weeks.append(week)
 
-    month_label = f"{MONTH_NAMES_RU[month]} {year}"
+    loc = get_calendar_locale(lang)
+    month_label = f"{loc.month_nom[month]} {year}"
     return {
         "view": "month",
         "header_label": month_label,
         "month_label": month_label,
         "year": year,
         "month": month,
-        "weekday_headers": WEEKDAY_HEADERS_RU,
+        "weekday_headers": loc.weekday_short,
         "weeks": weeks,
         "prev_year": prev_y,
         "prev_month": prev_m,
@@ -287,6 +299,7 @@ def build_week_calendar(
     anchor: date,
     *,
     today: date | None = None,
+    lang: str = "ru",
 ) -> dict[str, Any]:
     if today is None:
         today = _today()
@@ -297,16 +310,20 @@ def build_week_calendar(
     range_end = datetime.combine(week_end + timedelta(days=1), time.min)
     apps = _appointments_in_range(user_id, range_start, range_end)
 
+    loc = get_calendar_locale(lang)
     days = [
-        _day_column(user_id, week_start + timedelta(days=i), apps, today)
+        _day_column(user_id, week_start + timedelta(days=i), apps, today, lang=lang)
         for i in range(7)
     ]
 
     if week_start.month == week_end.month:
-        header = f"{week_start.day} – {week_end.day} {MONTH_NAMES_GENITIVE[week_end.month]} {week_end.year}"
+        header = (
+            f"{week_start.day} – {week_end.day} {loc.month_gen[week_end.month]} {week_end.year}"
+        )
     else:
         header = (
-            f"{format_date_short(week_start)} – {format_date_short(week_end)} {week_end.year}"
+            f"{format_date_short(week_start, lang=lang)} – "
+            f"{format_date_short(week_end, lang=lang)} {week_end.year}"
         )
 
     result = {
@@ -329,6 +346,7 @@ def build_day_calendar(
     day: date,
     *,
     today: date | None = None,
+    lang: str = "ru",
 ) -> dict[str, Any]:
     if today is None:
         today = _today()
@@ -336,9 +354,12 @@ def build_day_calendar(
     range_start = datetime.combine(day, time.min)
     range_end = range_start + timedelta(days=1)
     apps = _appointments_in_range(user_id, range_start, range_end)
-    col = _day_column(user_id, day, apps, today)
-
-    header = f"{WEEKDAY_FULL_RU[day.weekday()]}, {day.day} {MONTH_NAMES_GENITIVE[day.month]} {day.year}"
+    col = _day_column(user_id, day, apps, today, lang=lang)
+    loc = get_calendar_locale(lang)
+    header = (
+        f"{loc.weekday_full[day.weekday()]}, {day.day} "
+        f"{loc.month_gen[day.month]} {day.year}"
+    )
 
     result = {
         "view": "day",
@@ -362,18 +383,19 @@ def build_calendar_view(
     cal_month: int | None = None,
     cal_date: date | None = None,
     today: date | None = None,
+    lang: str = "ru",
 ) -> dict[str, Any]:
     if today is None:
         today = _today()
     anchor = cal_date or today
 
     if cal_view == "week":
-        return build_week_calendar(user_id, anchor, today=today)
+        return build_week_calendar(user_id, anchor, today=today, lang=lang)
     if cal_view == "day":
-        return build_day_calendar(user_id, anchor, today=today)
+        return build_day_calendar(user_id, anchor, today=today, lang=lang)
 
     year, month = parse_calendar_month(cal_year, cal_month)
-    return build_month_calendar(user_id, year, month, today=today)
+    return build_month_calendar(user_id, year, month, today=today, lang=lang)
 
 
 def appointments_for_calendar_view(

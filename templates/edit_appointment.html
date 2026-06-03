@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Редактирование записи') }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h4 mb-3">{{ _('Редактирование записи') }}</h1>
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" id="appointmentEditForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="use_catalog_duration" id="useCatalogDuration" value="0">
+                    <input type="hidden" name="return_to" value="{{ return_to }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Услуга из каталога') }}</label>
+                        <select name="catalog_service_id" id="catalogService" class="form-select">
+                            <option value="">{{ _('— ввести вручную —') }}</option>
+                            {% for s in catalog_services %}
+                            <option value="{{ s.id }}"
+                                    {% if appointment.catalog_service_id == s.id %}selected{% endif %}
+                                    data-name="{{ s.name }}"
+                                    data-price="{{ s.price }}"
+                                    data-minutes="{{ s.duration_minutes }}">
+                                {{ s.name }} — {{ '%.0f'|format(s.price) }} ₽, {{ s.duration_minutes }} мин
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Название / услуга *') }}</label>
+                        <input type="text" name="title" id="titleField" class="form-control" required
+                               value="{{ appointment.title }}">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Стоимость, ₽') }}</label>
+                            <input type="number" name="price" id="priceField" class="form-control" min="0" step="0.01"
+                                   value="{{ appointment.price if appointment.price is not none else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Клиент') }}</label>
+                            <select name="client_id" class="form-select">
+                                <option value="">{{ _('— не выбран —') }}</option>
+                                {% for c in clients %}
+                                <option value="{{ c.id }}" {% if appointment.client_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Ответственный сотрудник') }}</label>
+                            <select name="staff_id" class="form-select">
+                                <option value="">{{ _('— не назначен —') }}</option>
+                                {% for s in staff_list %}
+                                <option value="{{ s.id }}" {% if appointment.staff_id == s.id %}selected{% endif %}>
+                                    {{ s.name }}{% if s.role_title %} ({{ s.role_title }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Статус') }}</label>
+                            <select name="status" class="form-select">
+                                <option value="scheduled" {% if appointment.status == 'scheduled' %}selected{% endif %}>{{ _('активна') }}</option>
+                                <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>{{ _('отменена') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ _('Начало *') }}</label>
+                            <input type="datetime-local" name="start_at" id="startAt" class="form-control" lang="{{ html_lang }}" required
+                                   value="{{ appointment.start_at.strftime('%Y-%m-%dT%H:%M') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ _('Окончание *') }}</label>
+                            <input type="datetime-local" name="end_at" id="endAt" class="form-control" lang="{{ html_lang }}" required
+                                   value="{{ appointment.end_at.strftime('%Y-%m-%dT%H:%M') }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Примечания') }}</label>
+                        <textarea name="notes" class="form-control" rows="2">{{ appointment.notes or '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">{{ _('Сохранить') }}</button>
+                    {% if return_to == 'client' and appointment.client_id %}
+                    <a href="{{ url_for('client_detail', client_id=appointment.client_id) }}" class="btn btn-secondary">{{ _('К клиенту') }}</a>
+                    {% else %}
+                    <a href="{{ url_for('calendar') }}" class="btn btn-secondary">{{ _('Назад') }}</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const catalog = document.getElementById('catalogService');
+    const titleField = document.getElementById('titleField');
+    const priceField = document.getElementById('priceField');
+    const startAt = document.getElementById('startAt');
+    const endAt = document.getElementById('endAt');
+    const useCatalogDuration = document.getElementById('useCatalogDuration');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function toLocalInputValue(d) {
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+            'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    function applyCatalogSelection() {
+        const opt = catalog.options[catalog.selectedIndex];
+        if (!opt || !opt.value) {
+            useCatalogDuration.value = '0';
+            return;
+        }
+        useCatalogDuration.value = '1';
+        titleField.value = opt.dataset.name || '';
+        priceField.value = opt.dataset.price || '';
+        const minutes = parseInt(opt.dataset.minutes || '60', 10);
+        if (startAt.value) {
+            const start = new Date(startAt.value);
+            if (!isNaN(start.getTime())) {
+                endAt.value = toLocalInputValue(new Date(start.getTime() + minutes * 60000));
+            }
+        }
+    }
+
+    catalog.addEventListener('change', applyCatalogSelection);
+    startAt.addEventListener('change', function () {
+        if (catalog.value) applyCatalogSelection();
+    });
+})();
+</script>
+{% endblock %}

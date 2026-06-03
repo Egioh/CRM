@@ -18,7 +18,7 @@
                 {% if cell.in_month and cell.appointment_count == 0 %}
                 <a class="month-calendar-add-day"
                    href="{{ url_for('appointment_new') }}?date={{ cell.date.isoformat() }}"
-                   title="Новая запись">+</a>
+                   title="{{ _('Новая запись') }}">+</a>
                 {% endif %}
             </div>
             <div class="month-calendar-events">

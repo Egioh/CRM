@@ -3,11 +3,11 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2>AI Анализ клиента: {{ client.name }}</h2>
+        <h2>{{ _('AI Анализ клиента:') }} {{ client.name }}</h2>
         
         <div class="card mt-4">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0">🤖 Рекомендации DeepSeek</h5>
+                <h5 class="mb-0">🤖 {{ _('Рекомендации DeepSeek') }}</h5>
             </div>
             <div class="card-body">
                 <div style="white-space: pre-line;">{{ analysis }}</div>
@@ -16,10 +16,10 @@
 
         <div class="mt-3">
             <a href="{{ url_for('client_detail', client_id=client.id) }}" class="btn btn-secondary">
-                ← Назад к клиенту
+                ← {{ _('Назад к клиенту') }}
             </a>
             <a href="{{ url_for('index') }}" class="btn btn-primary">
-                📋 К списку клиентов
+                📋 {{ _('К списку клиентов') }}
             </a>
         </div>
     </div>

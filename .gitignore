@@ -15,6 +15,7 @@ env/
 
 # Secrets and local DB
 .env
+.env.postgres.local
 *.db
 crm.db
 

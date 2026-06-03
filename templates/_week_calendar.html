@@ -36,7 +36,7 @@
                     {% endfor %}
                     <a class="time-grid-column-add"
                        href="{{ url_for('appointment_new') }}?date={{ day.date_iso }}"
-                       title="Новая запись на этот день">+</a>
+                       title="{{ _('Новая запись') }}">+</a>
                 </div>
                 {% endfor %}
             </div>

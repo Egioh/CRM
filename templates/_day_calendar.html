@@ -5,7 +5,7 @@
         <div class="time-grid-day-head is-today-wide {% if day.is_today %}is-today{% endif %}">
             <span class="time-grid-weekday">{{ day.weekday_full }}</span>
             <span class="time-grid-day-num-large {% if day.is_today %}today-badge{% endif %}">{{ day.day }}</span>
-            <a href="{{ url_for('appointment_new') }}?date={{ day.date_iso }}" class="btn btn-sm btn-outline-primary mt-1">+ Запись</a>
+            <a href="{{ url_for('appointment_new') }}?date={{ day.date_iso }}" class="btn btn-sm btn-outline-primary mt-1">+ {{ _('Запись') }}</a>
         </div>
     </div>
     <div class="time-grid-scroll">
@@ -35,6 +35,6 @@
         </div>
     </div>
     {% if day.appointment_count == 0 %}
-    <div class="p-3 text-muted small border-top">На этот день записей нет.</div>
+    <div class="p-3 text-muted small border-top">{{ _('На выбранный период записей нет.') }}</div>
     {% endif %}
 </div>

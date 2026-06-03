@@ -5,25 +5,25 @@
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
-                <a href="{{ url_for('index') }}" class="text-muted small">← К списку</a>
+                <a href="{{ url_for('index') }}" class="text-muted small">{{ _('← К списку') }}</a>
                 <h2 class="mb-0 mt-1">{{ client.name }}</h2>
                 {% if client.status %}
-                <span class="badge bg-{{ client.status.color }}">{{ client.status.name }}</span>
+                <span class="badge bg-{{ client.status.color }}">{{ _(client.status.name) }}</span>
                 {% endif %}
-                <span class="badge {% if payment_label == 'Оплачен' %}bg-success{% elif payment_label == 'Не оплачен' %}bg-danger{% elif payment_label.startswith('Частично') %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                    {{ payment_label }}
+                <span class="badge {% if payment_kind == 'paid' %}bg-success{% elif payment_kind == 'unpaid' %}bg-danger{% elif payment_kind == 'partial' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                    {{ payment_display }}
                 </span>
                 {% if client_debt_amount > 0 %}
-                <span class="badge bg-danger">Долг: {{ '%.0f'|format(client_debt_amount) }} ₽</span>
+                <span class="badge bg-danger">{{ _('Долг:') }} {{ '%.0f'|format(client_debt_amount) }} ₽</span>
                 {% endif %}
             </div>
             <div class="btn-group flex-wrap">
-                <a href="{{ url_for('appointment_new', client_id=client.id) }}" class="btn btn-primary">Записать на приём</a>
-                <a href="{{ url_for('edit_client', client_id=client.id) }}" class="btn btn-outline-secondary">Редактировать</a>
+                <a href="{{ url_for('appointment_new', client_id=client.id) }}" class="btn btn-primary">{{ _('Записать на приём') }}</a>
+                <a href="{{ url_for('edit_client', client_id=client.id) }}" class="btn btn-outline-secondary">{{ _('Редактировать') }}</a>
                 <form method="POST" action="{{ url_for('delete_client', client_id=client.id) }}" class="d-inline"
-                      onsubmit="return confirm('Удалить клиента?')">
+                      onsubmit="return confirm('{{ _('Удалить клиента?') }}')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-outline-danger">Удалить</button>
+                    <button type="submit" class="btn btn-outline-danger">{{ _('Удалить') }}</button>
                 </form>
             </div>
         </div>
@@ -31,43 +31,44 @@
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header"><h5 class="mb-0">Контакты и статус</h5></div>
+                    <div class="card-header"><h5 class="mb-0">{{ _('Контакты и статус') }}</h5></div>
                     <div class="card-body">
-                        <p><strong>Телефон:</strong>
+                        <p><strong>{{ _('Телефон') }}:</strong>
                             {% if client.phone %}
                             <a href="tel:{{ client.phone|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}">{{ client.phone }}</a>
                             {% else %}—{% endif %}
                         </p>
-                        <p><strong>Email:</strong> {{ client.email or '—' }}</p>
+                        <p><strong>{{ _('Email') }}:</strong> {{ client.email or '—' }}</p>
                         {% if client.telegram_chat_id %}
                         <p><strong>Telegram:</strong> <span class="text-muted">chat {{ client.telegram_chat_id }}</span></p>
                         {% endif %}
-                        <p><strong>Заметка:</strong> {{ client.notes or '—' }}</p>
-                        <p class="mb-2"><strong>Дата добавления:</strong> {{ client.created_at.strftime('%d.%m.%Y') }}</p>
+                        <p><strong>{{ _('Заметка:') }}</strong> {{ tr_note(client.notes) if client.notes else '—' }}</p>
+                        <p class="mb-2"><strong>{{ _('Дата добавления:') }}</strong> {{ client.created_at.strftime('%d.%m.%Y') }}</p>
                         <form method="POST" action="{{ url_for('client_set_status', client_id=client.id) }}" class="d-flex gap-2 align-items-end">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="flex-grow-1">
-                                <label class="form-label small">Статус</label>
+                                <label class="form-label small">{{ _('Статус') }}</label>
                                 <select name="status_id" class="form-select">
                                     {% for s in statuses %}
-                                    <option value="{{ s.id }}" {% if client.status_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                    <option value="{{ s.id }}" {% if client.status_id == s.id %}selected{% endif %}>{{ _(s.name) }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                            <button type="submit" class="btn btn-primary">{{ _('Сохранить') }}</button>
                         </form>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card mb-3">
-                    <div class="card-header"><h5 class="mb-0">Напоминание</h5></div>
+                    <div class="card-header"><h5 class="mb-0">{{ _('Напоминание') }}</h5></div>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('client_add_reminder', client_id=client.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="date" name="due_at" class="form-control mb-2" required>
-                            <input type="text" name="body" class="form-control mb-2" value="Перезвонить">
-                            <button type="submit" class="btn btn-outline-primary w-100">Добавить</button>
+                            <input type="text" name="due_at" class="form-control mb-2" data-app-date
+                                   placeholder="{{ _('дд.мм.гггг') }}" autocomplete="off" required>
+                            <input type="text" name="body" class="form-control mb-2" value="{{ _('Перезвонить') }}">
+                            <button type="submit" class="btn btn-outline-primary w-100">{{ _('Добавить') }}</button>
                         </form>
                         {% for r in open_reminders %}
                         <div class="mt-2 small d-flex justify-content-between border-top pt-2">
@@ -81,12 +82,12 @@
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-header"><h5 class="mb-0">Комментарий</h5></div>
+                    <div class="card-header"><h5 class="mb-0">{{ _('Комментарий') }}</h5></div>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('client_add_comment', client_id=client.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <textarea name="body" class="form-control mb-2" rows="3" placeholder="Звонил, перенёс визит, уточнил детали…" required></textarea>
-                            <button type="submit" class="btn btn-primary w-100">Добавить комментарий</button>
+                            <textarea name="body" class="form-control mb-2" rows="3" placeholder="{{ _('Звонил, перенёс визит, уточнил детали…') }}" required></textarea>
+                            <button type="submit" class="btn btn-primary w-100">{{ _('Добавить комментарий') }}</button>
                         </form>
                     </div>
                 </div>
@@ -95,7 +96,7 @@
 
         {% if can_whatsapp or can_telegram %}
         <div class="card mb-4">
-            <div class="card-header"><h5 class="mb-0">Ответ в мессенджер</h5></div>
+            <div class="card-header"><h5 class="mb-0">{{ _('Ответ в мессенджер') }}</h5></div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('client_send_message', client_id=client.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -107,42 +108,137 @@
                             </select>
                         </div>
                         <div class="col-md-8">
-                            <textarea name="body" class="form-control" rows="2" placeholder="Текст сообщения" required></textarea>
+                            <textarea name="body" class="form-control" rows="2" placeholder="{{ _('Текст сообщения') }}" required></textarea>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Отправить</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Отправить') }}</button>
                 </form>
-                <p class="small text-muted mb-0 mt-2">Нужны TELEGRAM_BOT_TOKEN и/или WA_ACCESS_TOKEN в .env</p>
+                <p class="small text-muted mb-0 mt-2">{{ _('Нужны TELEGRAM_BOT_TOKEN и/или WA_ACCESS_TOKEN в .env') }}</p>
             </div>
         </div>
         {% endif %}
 
         {% if recent_messages %}
-        <h5>Входящие сообщения</h5>
-        {% for m in recent_messages %}
-        <div class="card mb-2">
-            <div class="card-body py-2">
-                <small class="text-muted">{{ m.channel }} · {{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
-                <p class="mb-0">{{ m.body or '—' }}</p>
+        {% set msg_count = recent_messages|length %}
+        {% set msg_collapsed = msg_count > list_collapse_threshold %}
+        <div class="card mb-3 client-detail-collapsible">
+            <div class="card-header py-2 d-flex align-items-center gap-2">
+                <button type="button"
+                        class="btn btn-link text-decoration-none text-reset p-0 d-flex align-items-center gap-2 flex-grow-1 client-detail-collapse-toggle{% if msg_collapsed %} collapsed{% endif %}"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#clientMessagesCollapse"
+                        aria-expanded="{{ 'false' if msg_collapsed else 'true' }}"
+                        aria-controls="clientMessagesCollapse">
+                    <span class="client-detail-collapse-chevron" aria-hidden="true">▼</span>
+                    <h5 class="mb-0">{{ _('Входящие сообщения') }}</h5>
+                    <span class="badge bg-secondary">{{ msg_count }}</span>
+                </button>
+                <span class="small text-muted d-none d-md-inline client-detail-collapse-hint">
+                    {% if msg_collapsed %}{{ _('Нажмите, чтобы развернуть') }}{% else %}{{ _('Нажмите, чтобы свернуть') }}{% endif %}
+                </span>
+            </div>
+            <div id="clientMessagesCollapse" class="collapse{% if not msg_collapsed %} show{% endif %}">
+                <div class="card-body pt-0">
+                    {% for m in recent_messages %}
+                    <div class="card mb-2">
+                        <div class="card-body py-2">
+                            <small class="text-muted">{{ m.channel }} · {{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            <p class="mb-0">{{ m.body or '—' }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-        {% endfor %}
         {% endif %}
 
+        {% set appt_count = client_appointments|length %}
+        {% set appt_collapsed = appt_count > list_collapse_threshold %}
+        <div class="card mb-3 client-detail-collapsible">
+            <div class="card-header py-2 d-flex align-items-center gap-2">
+                <button type="button"
+                        class="btn btn-link text-decoration-none text-reset p-0 d-flex align-items-center gap-2 flex-grow-1 client-detail-collapse-toggle{% if appt_collapsed %} collapsed{% endif %}"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#clientAppointmentsCollapse"
+                        aria-expanded="{{ 'false' if appt_collapsed else 'true' }}"
+                        aria-controls="clientAppointmentsCollapse">
+                    <span class="client-detail-collapse-chevron" aria-hidden="true">▼</span>
+                    <h5 class="mb-0">{{ _('Записи клиента') }}</h5>
+                    {% if appt_count %}<span class="badge bg-primary">{{ appt_count }}</span>{% endif %}
+                </button>
+                {% if appt_count %}
+                <span class="small text-muted d-none d-md-inline client-detail-collapse-hint">
+                    {% if appt_collapsed %}{{ _('Нажмите, чтобы развернуть') }}{% else %}{{ _('Нажмите, чтобы свернуть') }}{% endif %}
+                </span>
+                {% endif %}
+            </div>
+            <div id="clientAppointmentsCollapse" class="collapse{% if not appt_collapsed %} show{% endif %}">
+                <div class="card-body pt-0">
+                    {% for ap in client_appointments %}
+                    <div class="card mb-2">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {{ ap.title }}
+                                        {% if ap.status == 'cancelled' %}
+                                        <span class="badge bg-secondary">{{ _('отменена') }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">{{ _('активна') }}</span>
+                                        {% endif %}
+                                        {% if ap.recurrence_series_id %}
+                                        <span class="badge bg-info text-dark" title="{{ _('Серия повторений') }}">↻</span>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ ap.start_at.strftime('%d.%m.%Y %H:%M') }} — {{ ap.end_at.strftime('%H:%M') }}
+                                        {% if ap.price %} · {{ '%.0f'|format(ap.price) }} ₽{% endif %}
+                                        {% if ap.responsible_staff %} · {{ ap.responsible_staff.name }}{% endif %}
+                                    </small>
+                                    {% if ap.notes %}<p class="mb-0 mt-1 small">{{ tr_note(ap.notes) }}</p>{% endif %}
+                                </div>
+                                <div class="btn-group btn-group-sm flex-shrink-0">
+                                    <a href="{{ url_for('appointment_edit', appointment_id=ap.id, ref='client') }}"
+                                       class="btn btn-outline-secondary">{{ _('Редактировать') }}</a>
+                                    {% if ap.status != 'cancelled' %}
+                                    <form method="POST" action="{{ url_for('appointment_cancel', appointment_id=ap.id) }}"
+                                          onsubmit="return confirm('{{ _('Отменить запись? Она останется в календаре как отменённая.') }}')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-warning">{{ _('Отменить') }}</button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('appointment_delete', appointment_id=ap.id) }}"
+                                          onsubmit="return confirm('{{ _('Удалить запись безвозвратно?') }}')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger">{{ _('Удалить') }}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">{{ _('Записей у клиента пока нет.') }}
+                        <a href="{{ url_for('appointment_new', client_id=client.id) }}">{{ _('Записать на приём') }}</a>
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         {% if status_history %}
-        <h5 class="mt-3">История статусов</h5>
+        <h5 class="mt-3">{{ _('История статусов') }}</h5>
         <ul class="list-group mb-3">
             {% for h in status_history %}
             <li class="list-group-item small">
                 {{ h.changed_at.strftime('%d.%m.%Y %H:%M') }}:
-                {% if h.old_status %}{{ h.old_status.name }}{% else %}—{% endif %}
-                → {% if h.new_status %}{{ h.new_status.name }}{% else %}—{% endif %}
+                {% if h.old_status %}{{ _(h.old_status.name) }}{% else %}—{% endif %}
+                → {% if h.new_status %}{{ _(h.new_status.name) }}{% else %}—{% endif %}
             </li>
             {% endfor %}
         </ul>
         {% endif %}
 
-        <h5>История комментариев</h5>
+        <h5>{{ _('История комментариев') }}</h5>
         {% for comment in client.comments|sort(attribute='created_at', reverse=true) %}
         <div class="card mb-2">
             <div class="card-body py-2">
@@ -151,7 +247,7 @@
             </div>
         </div>
         {% else %}
-        <p class="text-muted">Комментариев пока нет</p>
+        <p class="text-muted">{{ _('Комментариев пока нет') }}</p>
         {% endfor %}
     </div>
 </div>
@@ -160,42 +256,45 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Добавить заказ</h5>
-                <span class="badge bg-primary">{{ client.orders|length }} заказов</span>
+                <h5 class="mb-0">{{ _('Добавить заказ') }}</h5>
+                <span class="badge bg-primary">{{ client.orders|length }} {{ _('заказов') }}</span>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('add_order', client_id=client.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-2">
-                        <input type="text" name="service" class="form-control" placeholder="Услуга/товар" required>
+                        <input type="text" name="service" class="form-control" placeholder="{{ _('Услуга/товар') }}" required>
                     </div>
                     <div class="mb-2">
-                        <input type="number" step="0.01" name="price" class="form-control" placeholder="Цена" required>
+                        <input type="number" step="0.01" name="price" class="form-control" placeholder="{{ _('Цена') }}" required>
                     </div>
                     <div class="mb-2">
-                        <textarea name="notes" class="form-control" placeholder="Примечания к заказу"></textarea>
+                        <textarea name="notes" class="form-control" placeholder="{{ _('Примечания к заказу') }}"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Добавить заказ</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Добавить заказ') }}</button>
                 </form>
             </div>
         </div>
 
         <div class="mt-3">
-            <h5>История заказов</h5>
+            <h5>{{ _('История заказов') }}</h5>
             {% for order in client.orders|sort(attribute='date', reverse=true) %}
             <div class="card mb-2">
                 <div class="card-body py-2">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <h6 class="card-title mb-1">{{ order.service }}</h6>
-                            <p class="card-text mb-1"><strong>{{ order.price }} руб.</strong></p>
+                            {% if order.responsible_staff %}
+                            <p class="card-text mb-1 small text-muted">{{ _('Ответственный') }}: {{ order.responsible_staff.name }}</p>
+                            {% endif %}
+                            <p class="card-text mb-1"><strong>{{ order.price }} {{ _('руб.') }}</strong></p>
                             <small class="text-muted">{{ order.date.strftime('%d.%m.%Y %H:%M') }}</small>
                             {% if order.notes %}<p class="card-text mb-0"><small>{{ order.notes }}</small></p>{% endif %}
                         </div>
                         <div class="btn-group btn-group-sm ms-2">
                             <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-outline-secondary">✏️</a>
                             <form method="POST" action="{{ url_for('delete_order', order_id=order.id) }}" class="d-inline"
-                                  onsubmit="return confirm('Удалить этот заказ?')">
+                                  onsubmit="return confirm('{{ _('Удалить этот заказ?') }}')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-danger">🗑️</button>
                             </form>
@@ -204,7 +303,7 @@
                 </div>
             </div>
             {% else %}
-            <p class="text-muted">Заказов пока нет</p>
+            <p class="text-muted">{{ _('Заказов пока нет') }}</p>
             {% endfor %}
         </div>
     </div>
@@ -212,46 +311,46 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Добавить платеж</h5>
-                <span class="badge bg-success">{{ client.payments|length }} платежей</span>
+                <h5 class="mb-0">{{ _('Добавить платеж') }}</h5>
+                <span class="badge bg-success">{{ client.payments|length }} {{ _('платежей') }}</span>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('add_payment', client_id=client.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-2">
-                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Сумма" required>
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="{{ _('Сумма') }}" required>
                     </div>
                     <div class="mb-2">
                         <select name="method" class="form-control" required>
-                            <option value="cash">Наличные</option>
-                            <option value="card">Карта</option>
-                            <option value="transfer">Перевод</option>
+                            <option value="cash">{{ _('Наличные') }}</option>
+                            <option value="card">{{ _('Карта') }}</option>
+                            <option value="transfer">{{ _('Перевод') }}</option>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <textarea name="notes" class="form-control" placeholder="Примечания к платежу"></textarea>
+                        <textarea name="notes" class="form-control" placeholder="{{ _('Примечания к платежу') }}"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Добавить платеж</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Добавить платеж') }}</button>
                 </form>
             </div>
         </div>
 
         <div class="mt-3">
-            <h5>История платежей</h5>
+            <h5>{{ _('История платежей') }}</h5>
             {% for payment in client.payments|sort(attribute='date', reverse=true) %}
             <div class="card mb-2">
                 <div class="card-body py-2">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <h6 class="card-title mb-1">{{ payment.amount }} руб.</h6>
-                            <p class="card-text mb-1">Способ: {{ payment.method }}</p>
+                            <h6 class="card-title mb-1">{{ payment.amount }} {{ _('руб.') }}</h6>
+                            <p class="card-text mb-1">{{ _('Способ:') }} {{ _(payment.method) }}</p>
                             <small class="text-muted">{{ payment.date.strftime('%d.%m.%Y %H:%M') }}</small>
                             {% if payment.notes %}<p class="card-text mb-0"><small>{{ payment.notes }}</small></p>{% endif %}
                         </div>
                         <div class="btn-group btn-group-sm ms-2">
                             <a href="{{ url_for('edit_payment', payment_id=payment.id) }}" class="btn btn-outline-secondary">✏️</a>
                             <form method="POST" action="{{ url_for('delete_payment', payment_id=payment.id) }}" class="d-inline"
-                                  onsubmit="return confirm('Удалить этот платеж?')">
+                                  onsubmit="return confirm('{{ _('Удалить этот платеж?') }}')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-danger">🗑️</button>
                             </form>
@@ -260,9 +359,46 @@
                 </div>
             </div>
             {% else %}
-            <p class="text-muted">Платежей пока нет</p>
+            <p class="text-muted">{{ _('Платежей пока нет') }}</p>
             {% endfor %}
         </div>
     </div>
 </div>
+
+<style>
+    .client-detail-collapse-chevron {
+        display: inline-block;
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+        line-height: 1;
+    }
+    .client-detail-collapse-toggle.collapsed .client-detail-collapse-chevron {
+        transform: rotate(-90deg);
+    }
+    .client-detail-collapse-toggle:hover {
+        opacity: 0.85;
+    }
+</style>
+<script>
+(function () {
+    var expandHint = {{ _('Нажмите, чтобы развернуть')|tojson }};
+    var collapseHint = {{ _('Нажмите, чтобы свернуть')|tojson }};
+    document.querySelectorAll('.client-detail-collapsible').forEach(function (card) {
+        var toggle = card.querySelector('.client-detail-collapse-toggle');
+        var target = card.querySelector('.collapse');
+        var hint = card.querySelector('.client-detail-collapse-hint');
+        if (!toggle || !target) return;
+        target.addEventListener('shown.bs.collapse', function () {
+            toggle.classList.remove('collapsed');
+            toggle.setAttribute('aria-expanded', 'true');
+            if (hint) hint.textContent = collapseHint;
+        });
+        target.addEventListener('hidden.bs.collapse', function () {
+            toggle.classList.add('collapsed');
+            toggle.setAttribute('aria-expanded', 'false');
+            if (hint) hint.textContent = expandHint;
+        });
+    });
+})();
+</script>
 {% endblock %}

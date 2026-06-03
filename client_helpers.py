@@ -67,6 +67,16 @@ def payment_summary(client: Client) -> str:
     return "Не оплачен"
 
 
+def payment_kind(label: str) -> str:
+    if label == "Оплачен":
+        return "paid"
+    if label == "Не оплачен":
+        return "unpaid"
+    if label.startswith("Частично"):
+        return "partial"
+    return "none"
+
+
 def record_status_change(client: Client, new_status_id: int | None) -> None:
     """Пишет в историю, если статус реально меняется."""
     old_id = client.status_id

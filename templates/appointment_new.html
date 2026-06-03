@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Новая запись{% endblock %}
+{% block title %}{{ _('Новая запись') }}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <h1 class="h4 mb-3">Новая запись</h1>
-        {% if preselect_client_id %}<p class="text-muted small">Клиент выбран из карточки.</p>{% endif %}
+        <h1 class="h4 mb-3">{{ _('Новая запись') }}</h1>
+        {% if preselect_client_id %}<p class="text-muted small">{{ _('Клиент выбран из карточки.') }}</p>{% endif %}
         <div class="card">
             <div class="card-body">
                 <form method="POST" id="appointmentForm">
@@ -12,9 +12,9 @@
                     <input type="hidden" name="use_catalog_duration" id="useCatalogDuration" value="1">
 
                     <div class="mb-3">
-                        <label class="form-label">Услуга из каталога</label>
+                        <label class="form-label">{{ _('Услуга из каталога') }}</label>
                         <select name="catalog_service_id" id="catalogService" class="form-select">
-                            <option value="">— ввести вручную —</option>
+                            <option value="">{{ _('— ввести вручную —') }}</option>
                             {% for s in catalog_services %}
                             <option value="{{ s.id }}"
                                     {% if preselect_service_id == s.id %}selected{% endif %}
@@ -26,26 +26,35 @@
                             {% endfor %}
                         </select>
                         {% if not catalog_services %}
-                        <div class="form-text"><a href="{{ url_for('manage_services') }}">Добавить услуги в каталог</a></div>
+                        <div class="form-text"><a href="{{ url_for('manage_services') }}">{{ _('Добавить услуги в каталог') }}</a></div>
                         {% endif %}
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Название / услуга *</label>
+                        <label class="form-label">{{ _('Название / услуга *') }}</label>
                         <input type="text" name="title" id="titleField" class="form-control" required>
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Стоимость, ₽</label>
-                            <input type="number" name="price" id="priceField" class="form-control" min="0" step="0.01" placeholder="Из каталога">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Стоимость, ₽') }}</label>
+                            <input type="number" name="price" id="priceField" class="form-control" min="0" step="0.01" placeholder="{{ _('Из каталога') }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Клиент</label>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Клиент') }}</label>
                             <select name="client_id" class="form-select">
-                                <option value="">— не выбран —</option>
+                                <option value="">{{ _('— не выбран —') }}</option>
                                 {% for c in clients %}
                                 <option value="{{ c.id }}" {% if preselect_client_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Ответственный сотрудник') }}</label>
+                            <select name="staff_id" class="form-select">
+                                <option value="">{{ _('— не назначен —') }}</option>
+                                {% for s in staff_list %}
+                                <option value="{{ s.id }}">{{ s.name }}{% if s.role_title %} ({{ s.role_title }}){% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -53,56 +62,57 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Начало *</label>
-                            <input type="datetime-local" name="start_at" id="startAt" class="form-control" required
+                            <label class="form-label">{{ _('Начало *') }}</label>
+                            <input type="datetime-local" name="start_at" id="startAt" class="form-control" lang="{{ html_lang }}" required
                                    {% if default_start %}value="{{ default_start }}"{% endif %}>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Окончание *</label>
-                            <input type="datetime-local" name="end_at" id="endAt" class="form-control" required
+                            <label class="form-label">{{ _('Окончание *') }}</label>
+                            <input type="datetime-local" name="end_at" id="endAt" class="form-control" lang="{{ html_lang }}" required
                                    {% if default_end %}value="{{ default_end }}"{% endif %}>
                         </div>
                     </div>
 
                     <div class="card bg-light mb-3">
                         <div class="card-body py-3">
-                            <label class="form-label fw-semibold small mb-2">Повторение</label>
+                            <label class="form-label fw-semibold small mb-2">{{ _('Повторение') }}</label>
                             <select name="repeat" id="repeatSelect" class="form-select form-select-sm mb-2">
                                 {% for code, label in recurrence_choices %}
-                                <option value="{{ code }}">{{ label }}</option>
+                                <option value="{{ code }}">{{ _(label) }}</option>
                                 {% endfor %}
                             </select>
                             <div id="repeatOptions" class="d-none">
                                 <div class="mb-2">
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="repeat_end_type" id="repeatByCount" value="count" checked>
-                                        <label class="form-check-label small" for="repeatByCount">Число повторов</label>
+                                        <label class="form-check-label small" for="repeatByCount">{{ _('Число повторов') }}</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="repeat_end_type" id="repeatByDate" value="date">
-                                        <label class="form-check-label small" for="repeatByDate">До даты</label>
+                                        <label class="form-check-label small" for="repeatByDate">{{ _('До даты') }}</label>
                                     </div>
                                 </div>
                                 <div id="repeatCountWrap">
                                     <input type="number" name="repeat_count" class="form-control form-control-sm" min="2" max="52" value="12">
-                                    <div class="form-text">Включая первую запись, не более 52</div>
+                                    <div class="form-text">{{ _('Включая первую запись, не более 52') }}</div>
                                 </div>
                                 <div id="repeatUntilWrap" class="d-none">
-                                    <input type="date" name="repeat_until" class="form-control form-control-sm">
+                                    <input type="text" name="repeat_until" class="form-control form-control-sm" data-app-date
+                                           placeholder="{{ _('дд.мм.гггг') }}" autocomplete="off">
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Примечания</label>
+                        <label class="form-label">{{ _('Примечания') }}</label>
                         <textarea name="notes" class="form-control" rows="2"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Создать</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Создать') }}</button>
                     {% if preselect_client_id %}
-                    <a href="{{ url_for('client_detail', client_id=preselect_client_id) }}" class="btn btn-secondary">К клиенту</a>
+                    <a href="{{ url_for('client_detail', client_id=preselect_client_id) }}" class="btn btn-secondary">{{ _('К клиенту') }}</a>
                     {% else %}
-                    <a href="{{ url_for('calendar') }}" class="btn btn-secondary">Назад</a>
+                    <a href="{{ url_for('calendar') }}" class="btn btn-secondary">{{ _('Назад') }}</a>
                     {% endif %}
                 </form>
             </div>

@@ -15,6 +15,8 @@ class User(UserMixin, db.Model):
     business_name = db.Column(db.String(100), nullable=False)
     business_type = db.Column(db.String(100), nullable=False)
     business_description = db.Column(db.Text)
+    role = db.Column(db.String(20), nullable=False, default='owner')  # owner | admin
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # WhatsApp Cloud API: metadata.phone_number_id в вебхуке — сопоставление с владельцем CRM
     whatsapp_phone_number_id = db.Column(db.String(64), nullable=True, unique=True)
@@ -22,7 +24,7 @@ class User(UserMixin, db.Model):
     telegram_ai_enabled = db.Column(db.Boolean, nullable=False, default=False)
     telegram_bot_token = db.Column(db.String(128), nullable=True)
     telegram_webhook_token = db.Column(db.String(64), nullable=True, unique=True, index=True)
-    telegram_ai_language = db.Column(db.String(16), nullable=False, default="auto")  # ru/en/cs/auto
+    telegram_ai_language = db.Column(db.String(16), nullable=False, default="auto")  # ru/en/cz/auto
     telegram_ai_tone = db.Column(db.String(32), nullable=False, default="friendly")  # neutral/friendly/premium/formal
     telegram_ai_timezone = db.Column(db.String(64), nullable=False, default="UTC")
     telegram_ai_display_name = db.Column(db.String(120), nullable=True)
@@ -37,6 +39,22 @@ class User(UserMixin, db.Model):
     telegram_ai_gdpr_text = db.Column(db.String(400), nullable=True)
 
     clients = db.relationship('Client', backref='user', lazy=True)
+    owner = db.relationship('User', remote_side=[id], backref='admin_users')
+
+    @property
+    def tenant_id(self) -> int:
+        """ID владельца бизнеса для изоляции данных (для admin — owner_id)."""
+        if self.role == 'admin' and self.owner_id:
+            return self.owner_id
+        return self.id
+
+    def is_business_owner(self) -> bool:
+        return self.role == 'owner' or not self.owner_id
+
+    def display_business_name(self) -> str:
+        if self.role == 'admin' and self.owner_id and self.owner:
+            return self.owner.business_name
+        return self.business_name
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -126,13 +144,67 @@ class ClientComment(db.Model):
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Staff(db.Model):
+    """Сотрудник бизнеса (справочник, без входа в CRM)."""
+
+    __tablename__ = 'staff'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    role_title = db.Column(db.String(120), nullable=True)
+    phone = db.Column(db.String(40), nullable=True)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('staff_members', lazy='dynamic'))
+    orders = db.relationship('Order', backref='responsible_staff', lazy='dynamic')
+
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=True)
     service = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     notes = db.Column(db.Text)
+
+    expenses = db.relationship(
+        'OrderExpense',
+        backref='order',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+    )
+
+
+class OrderExpense(db.Model):
+    """Расход, привязанный к заказу."""
+
+    __tablename__ = 'order_expense'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(300), nullable=False, default='')
+    expense_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class BusinessExpense(db.Model):
+    """Текущий / операционный расход бизнеса (не по заказу)."""
+
+    __tablename__ = 'business_expense'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(300), nullable=False, default='')
+    category = db.Column(db.String(80), nullable=True)
+    expense_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('business_expenses', lazy='dynamic'))
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -222,11 +294,13 @@ class Appointment(db.Model):
     notes = db.Column(db.Text)
     recurrence_series_id = db.Column(db.String(36), nullable=True, index=True)
     recurrence_rule = db.Column(db.String(20), nullable=True)
+    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('appointments', lazy='dynamic'))
     client = db.relationship('Client', backref=db.backref('appointments', lazy='dynamic'))
     catalog_service = db.relationship('CatalogService', backref='appointments')
+    responsible_staff = db.relationship('Staff', backref=db.backref('appointments', lazy='dynamic'))
 
 
 class TelegramConversationState(db.Model):

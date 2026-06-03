@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="mb-0">{{ _('Отчёты') }}</h2>
+    <a href="{{ url_for('reports_export') }}" class="btn btn-outline-secondary btn-sm">
+        {{ _('Скачать CSV') }}
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h6 class="text-muted">{{ _('Всего клиентов') }}</h6>
+                <p class="display-6 mb-0">{{ report.all_clients }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted">{{ _('Приход за месяц') }}</h6>
+                <p class="display-6 mb-0">{{ '%.2f'|format(report.month_income) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted">{{ _('Чистый результат за месяц') }}</h6>
+                <p class="display-6 mb-0">{{ '%.2f'|format(report.month_net) }}</p>
+                <small class="text-muted">{{ _('расходы') }}: {{ '%.2f'|format(report.month_expenses) }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">{{ _('Динамика за 12 месяцев') }}</div>
+    <div class="card-body">
+        <canvas id="reportsChart" height="100"></canvas>
+    </div>
+</div>
+
+<h4>{{ _('Сравнение периодов') }}</h4>
+{% set period_labels = {'week': _('Неделя к неделе'), 'month': _('Месяц к месяцу'), 'year': _('Год к году')} %}
+{% for block in report.comparisons %}
+<div class="card mb-3">
+    <div class="card-header">{{ period_labels.get(block.kind, block.kind) }}</div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm mb-0">
+            <thead>
+            <tr>
+                <th></th>
+                <th class="text-end">{{ _('Текущий период') }}</th>
+                <th class="text-end">{{ _('Предыдущий') }}</th>
+                <th class="text-end">Δ %</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>{{ _('Приход (платежи)') }}</td>
+                <td class="text-end">{{ '%.2f'|format(block.current.income) }}</td>
+                <td class="text-end">{{ '%.2f'|format(block.previous.income) }}</td>
+                <td class="text-end">
+                    {% if block.change_pct.income is not none %}{{ block.change_pct.income }}%{% else %}—{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>{{ _('Новых клиентов') }}</td>
+                <td class="text-end">{{ block.current.clients_new }}</td>
+                <td class="text-end">{{ block.previous.clients_new }}</td>
+                <td class="text-end">
+                    {% if block.change_pct.clients_new is not none %}{{ block.change_pct.clients_new }}%{% else %}—{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>{{ _('Расходы') }}</td>
+                <td class="text-end">{{ '%.2f'|format(block.current.expenses) }}</td>
+                <td class="text-end">{{ '%.2f'|format(block.previous.expenses) }}</td>
+                <td class="text-end">
+                    {% if block.change_pct.expenses is not none %}{{ block.change_pct.expenses }}%{% else %}—{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{{ _('Чистый результат') }}</strong></td>
+                <td class="text-end"><strong>{{ '%.2f'|format(block.current.net) }}</strong></td>
+                <td class="text-end"><strong>{{ '%.2f'|format(block.previous.net) }}</strong></td>
+                <td class="text-end">
+                    {% if block.change_pct.net is not none %}<strong>{{ block.change_pct.net }}%</strong>{% else %}—{% endif %}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const series = {{ report.chart_series | tojson }};
+    const labels = series.map(r => r.label);
+    const ctx = document.getElementById('reportsChart');
+    if (!ctx || !series.length) return;
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: {{ _('Приход')|tojson }},
+                    data: series.map(r => r.income),
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    tension: 0.2,
+                    fill: true
+                },
+                {
+                    label: {{ _('Расходы')|tojson }},
+                    data: series.map(r => r.expenses),
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.05)',
+                    tension: 0.2
+                },
+                {
+                    label: {{ _('Чистый результат')|tojson }},
+                    data: series.map(r => r.net),
+                    borderColor: '#0d6efd',
+                    tension: 0.2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+})();
+</script>
+{% endblock %}

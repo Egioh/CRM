@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Клиенты{% endblock %}
+{% block title %}{{ _('Клиенты') }}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h4 mb-0">Клиенты</h1>
+    <h1 class="h4 mb-0">{{ _('Клиенты') }}</h1>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ url_for('add_client') }}" class="btn btn-primary btn-sm">+ Клиент</a>
-        <a href="{{ url_for('manage_statuses') }}" class="btn btn-outline-secondary btn-sm">Статусы</a>
-        <a href="{{ url_for('calendar') }}" class="btn btn-outline-secondary btn-sm">Календарь</a>
+        <a href="{{ url_for('add_client') }}" class="btn btn-primary btn-sm">+ {{ _('Клиент') }}</a>
+        <a href="{{ url_for('manage_statuses') }}" class="btn btn-outline-secondary btn-sm">{{ _('Статусы') }}</a>
+        <a href="{{ url_for('calendar') }}" class="btn btn-outline-secondary btn-sm">{{ _('Календарь') }}</a>
     </div>
 </div>
 
@@ -16,18 +16,18 @@
     <div class="col-lg-3 col-md-4">
         <div class="card home-stats-panel h-100">
             <div class="card-header py-2 px-3">
-                <span class="small fw-semibold text-muted text-uppercase">Сводка</span>
+                <span class="small fw-semibold text-muted text-uppercase">{{ _('Сводка') }}</span>
             </div>
             <div class="card-body py-2 px-3">
                 <div class="home-kpi-list">
                     <a href="{{ url_for('index', cal_view=cal_view, cal_year=calendar_view.year if cal_view == 'month' else none, cal_month=calendar_view.month if cal_view == 'month' else none, cal_date=cal_date if cal_view != 'month' else none) }}"
                        class="home-kpi-item text-decoration-none text-body">
-                        <span class="home-kpi-label">Всего клиентов</span>
+                        <span class="home-kpi-label">{{ _('Всего клиентов') }}</span>
                         <span class="home-kpi-value">{{ dashboard.total_clients }}</span>
                     </a>
                     <a href="{{ url_for('index', unpaid=1, cal_view=cal_view, cal_year=calendar_view.year if cal_view == 'month' else none, cal_month=calendar_view.month if cal_view == 'month' else none, cal_date=cal_date if cal_view != 'month' else none) }}"
                        class="home-kpi-item text-decoration-none text-body">
-                        <span class="home-kpi-label">С долгом</span>
+                        <span class="home-kpi-label">{{ _('С долгом') }}</span>
                         <span class="home-kpi-value text-danger">{{ dashboard.unpaid_count }}</span>
                     </a>
                     {% if dashboard.total_debt > 0 %}
@@ -35,11 +35,11 @@
                     {% endif %}
                     <a href="{{ url_for('calendar', cal_view='day', cal_date=cal_date) }}"
                        class="home-kpi-item text-decoration-none text-body">
-                        <span class="home-kpi-label">Записи сегодня</span>
+                        <span class="home-kpi-label">{{ _('Записи сегодня') }}</span>
                         <span class="home-kpi-value text-primary">{{ dashboard.appointments_today }}</span>
                     </a>
                     <div class="home-kpi-item">
-                        <span class="home-kpi-label">Напоминания</span>
+                        <span class="home-kpi-label">{{ _('Напоминания') }}</span>
                         <span class="home-kpi-value">
                             {{ dashboard.reminders_today }}
                             {% if dashboard.reminders_overdue > 0 %}
@@ -50,13 +50,13 @@
                 </div>
 
                 <div class="home-status-divider"></div>
-                <div class="small fw-semibold text-muted text-uppercase mb-2">По статусам</div>
+                <div class="small fw-semibold text-muted text-uppercase mb-2">{{ _('По статусам') }}</div>
                 <div class="home-status-list">
                     {% for sc in dashboard.status_counts %}
                     <a href="{{ url_for('index', status=sc.id, cal_view=cal_view, cal_year=calendar_view.year if cal_view == 'month' else none, cal_month=calendar_view.month if cal_view == 'month' else none, cal_date=cal_date if cal_view != 'month' else none, q=search_q or none, unpaid=1 if unpaid_only else none) }}"
                        class="home-status-row text-decoration-none {% if status_filter == sc.id %}active{% endif %}">
                         <span class="badge bg-{{ sc.color }} home-status-badge">&nbsp;</span>
-                        <span class="home-status-name">{{ sc.name }}</span>
+                        <span class="home-status-name">{{ _(sc.name) }}</span>
                         <span class="home-status-count">{{ sc.count }}</span>
                     </a>
                     {% endfor %}
@@ -64,7 +64,7 @@
 
                 {% if reminders_today or reminders_overdue_list %}
                 <div class="home-status-divider"></div>
-                <div class="small fw-semibold text-muted text-uppercase mb-1">Напоминания</div>
+                <div class="small fw-semibold text-muted text-uppercase mb-1">{{ _('Напоминания') }}</div>
                 <ul class="list-unstyled home-reminders-mini mb-0">
                     {% for r in reminders_overdue_list[:3] %}
                     <li class="home-reminder-mini">
@@ -73,7 +73,7 @@
                         <span class="text-muted">{{ r.body }}</span>
                         <form method="POST" action="{{ url_for('reminder_done', reminder_id=r.id) }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-link btn-sm p-0 text-success" title="Готово">✓</button>
+                            <button type="submit" class="btn btn-link btn-sm p-0 text-success" title="{{ _('Готово') }}">✓</button>
                         </form>
                     </li>
                     {% endfor %}
@@ -83,7 +83,7 @@
                         <span class="text-muted">{{ r.body }}</span>
                         <form method="POST" action="{{ url_for('reminder_done', reminder_id=r.id) }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-link btn-sm p-0 text-success" title="Готово">✓</button>
+                            <button type="submit" class="btn btn-link btn-sm p-0 text-success" title="{{ _('Готово') }}">✓</button>
                         </form>
                     </li>
                     {% endfor %}
@@ -169,15 +169,15 @@ a.home-kpi-item:hover { background: #f0f4f8; }
     <input type="hidden" name="cal_date" value="{{ cal_date }}">
     {% endif %}
     <div class="col-md-4">
-        <label class="form-label small mb-1">Поиск</label>
-        <input type="search" name="q" class="form-control form-control-sm" placeholder="Имя или телефон" value="{{ search_q }}">
+        <label class="form-label small mb-1">{{ _('Поиск') }}</label>
+        <input type="search" name="q" class="form-control form-control-sm" placeholder="{{ _('Имя или телефон') }}" value="{{ search_q }}">
     </div>
     <div class="col-md-3">
-        <label class="form-label small mb-1">Статус</label>
+        <label class="form-label small mb-1">{{ _('Статус') }}</label>
         <select name="status" class="form-select form-select-sm">
-            <option value="">Все статусы</option>
+            <option value="">{{ _('Все статусы') }}</option>
             {% for s in statuses %}
-            <option value="{{ s.id }}" {% if status_filter == s.id %}selected{% endif %}>{{ s.name }}</option>
+            <option value="{{ s.id }}" {% if status_filter == s.id %}selected{% endif %}>{{ _(s.name) }}</option>
             {% endfor %}
         </select>
     </div>
@@ -185,15 +185,15 @@ a.home-kpi-item:hover { background: #f0f4f8; }
         <div class="form-check mt-4 pt-1">
             <input class="form-check-input" type="checkbox" name="unpaid" value="1" id="unpaidCheck"
                    {% if unpaid_only %}checked{% endif %}>
-            <label class="form-check-label small" for="unpaidCheck">Только с долгом</label>
+            <label class="form-check-label small" for="unpaidCheck">{{ _('Только с долгом') }}</label>
         </div>
     </div>
     <div class="col-md-2">
-        <button type="submit" class="btn btn-primary btn-sm w-100">Применить</button>
+        <button type="submit" class="btn btn-primary btn-sm w-100">{{ _('Применить') }}</button>
     </div>
     {% if search_q or status_filter or unpaid_only %}
     <div class="col-12">
-        <a href="{{ url_for('index') }}" class="small">Сбросить фильтры</a>
+        <a href="{{ url_for('index') }}" class="small">{{ _('Сбросить фильтры') }}</a>
     </div>
     {% endif %}
 </form>
@@ -202,12 +202,12 @@ a.home-kpi-item:hover { background: #f0f4f8; }
     <table class="table table-sm table-hover align-middle">
         <thead class="table-light">
             <tr>
-                <th>Имя</th>
-                <th>Телефон</th>
-                <th>Статус</th>
-                <th>Оплата</th>
-                <th>Долг</th>
-                <th class="text-end">Действия</th>
+                <th>{{ _('Имя') }}</th>
+                <th>{{ _('Телефон') }}</th>
+                <th>{{ _('Статус') }}</th>
+                <th>{{ _('Оплата') }}</th>
+                <th>{{ _('Долг') }}</th>
+                <th class="text-end">{{ _('Действия') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -226,29 +226,29 @@ a.home-kpi-item:hover { background: #f0f4f8; }
                 </td>
                 <td>
                     {% if c.status %}
-                    <span class="badge bg-{{ c.status.color }}">{{ c.status.name }}</span>
+                    <span class="badge bg-{{ c.status.color }}">{{ _(c.status.name) }}</span>
                     {% else %}
-                    <span class="badge bg-secondary">Без статуса</span>
+                    <span class="badge bg-secondary">{{ _('Без статуса') }}</span>
                     {% endif %}
                     <form method="POST" action="{{ url_for('client_set_status', client_id=c.id) }}" class="d-inline-block ms-1">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <select name="status_id" class="form-select form-select-sm d-inline-block w-auto"
-                                onchange="this.form.submit()" title="Сменить статус">
+                                onchange="this.form.submit()" title="{{ _('Сменить статус') }}">
                             {% for s in statuses %}
-                            <option value="{{ s.id }}" {% if c.status_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                            <option value="{{ s.id }}" {% if c.status_id == s.id %}selected{% endif %}>{{ _(s.name) }}</option>
                             {% endfor %}
                         </select>
                     </form>
                 </td>
                 <td>
-                    {% if row.payment_label == 'Оплачен' %}
-                    <span class="badge bg-success">{{ row.payment_label }}</span>
-                    {% elif row.payment_label == 'Не оплачен' %}
-                    <span class="badge bg-danger">{{ row.payment_label }}</span>
-                    {% elif row.payment_label.startswith('Частично') %}
-                    <span class="badge bg-warning text-dark">{{ row.payment_label }}</span>
+                    {% if row.payment_kind == 'paid' %}
+                    <span class="badge bg-success">{{ row.payment_display }}</span>
+                    {% elif row.payment_kind == 'unpaid' %}
+                    <span class="badge bg-danger">{{ row.payment_display }}</span>
+                    {% elif row.payment_kind == 'partial' %}
+                    <span class="badge bg-warning text-dark">{{ row.payment_display }}</span>
                     {% else %}
-                    <span class="text-muted">{{ row.payment_label }}</span>
+                    <span class="text-muted">{{ row.payment_display }}</span>
                     {% endif %}
                 </td>
                 <td>
@@ -259,16 +259,16 @@ a.home-kpi-item:hover { background: #f0f4f8; }
                     {% endif %}
                 </td>
                 <td class="text-end text-nowrap">
-                    <a href="{{ url_for('client_detail', client_id=c.id) }}" class="btn btn-sm btn-outline-primary">Карточка</a>
+                    <a href="{{ url_for('client_detail', client_id=c.id) }}" class="btn btn-sm btn-outline-primary">{{ _('Карточка') }}</a>
                 </td>
             </tr>
             {% else %}
             <tr>
                 <td colspan="6" class="text-center py-4 text-muted">
                     {% if unpaid_only %}
-                    Нет клиентов с долгом по выбранным фильтрам.
+                    {{ _('Нет клиентов с долгом по выбранным фильтрам.') }}
                     {% else %}
-                    Клиентов нет. <a href="{{ url_for('add_client') }}">Добавить первого</a>
+                    {{ _('Клиентов нет.') }} <a href="{{ url_for('add_client') }}">{{ _('Добавить первого') }}</a>
                     {% endif %}
                 </td>
             </tr>

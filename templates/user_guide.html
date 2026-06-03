@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Инструкция') }} — {{ _('CRM для бизнеса') }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="card sticky-top" style="top: 1rem;">
+            <div class="card-header fw-semibold">{{ _('Содержание') }}</div>
+            <div class="list-group list-group-flush small">
+                <a class="list-group-item list-group-item-action" href="#sec-intro">{{ _('Что это за программа') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-start">{{ _('Первые шаги') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-clients">{{ _('Раздел «Клиенты»') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-card">{{ _('Карточка клиента') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-orders">{{ _('Заказы и оплата') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-cal">{{ _('Календарь и записи') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-status">{{ _('Статусы клиентов') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-svc">{{ _('Каталог услуг') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-inbox">{{ _('Входящие сообщения') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-rep">{{ _('Отчёты и цифры') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-staff">{{ _('Сотрудники') }}</a>
+                <a class="list-group-item list-group-item-action" href="#sec-exp">{{ _('Расходы') }}</a>
+                {% if current_user.is_business_owner() %}
+                <a class="list-group-item list-group-item-action" href="#sec-owner">{{ _('Для владельца бизнеса') }}</a>
+                {% endif %}
+                <a class="list-group-item list-group-item-action" href="#sec-faq">{{ _('Частые вопросы') }}</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <header class="mb-4">
+            <h1 class="h2">{{ _('Подробная инструкция по работе с CRM') }}</h1>
+            <p class="text-muted mb-0">{{ _('Простыми словами, без технических терминов.') }}</p>
+            <p class="small text-muted mt-2">{{ _('Раздел «Помощь» в верхнем меню — откройте в любой момент.') }}</p>
+        </header>
+
+        <div class="alert alert-info">{{ _('Совет: вносите платежи в тот же день — тогда долг и отчёты всегда актуальны.') }}</div>
+
+        <section id="sec-intro" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Что это за программа') }}</h2>
+                <p>{{ _('Это ваш рабочий блокнот на компьютере: клиенты, записи на приём, кто уже заплатил и кто ещё должен. Всё хранится в одном месте — вы не потеряете переписку и бумажные записи.') }}</p>
+                <p class="mb-0">{{ _('Вы работаете в браузере (Chrome, Edge, Safari). Ничего устанавливать не нужно — откройте ссылку, которую вам дали, войдите под своим логином и пользуйтесь меню сверху.') }}</p>
+            </div>
+        </section>
+
+        <section id="sec-start" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Первые шаги') }}</h2>
+                <ul>
+                    <li>{{ _('Войдите с email и паролем, которые указали при регистрации.') }}</li>
+                    <li>{{ _('Язык: справа вверху — RU, EN или CZ. Выбор сохранится.') }}</li>
+                    <li>{{ _('Выход: кнопка «Выйти» — обязательно нажимайте на чужом компьютере.') }}</li>
+                    <li>{{ _('После входа откроется раздел «Клиенты» — это главный экран.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-clients" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Раздел «Клиенты»') }}</h2>
+                <p>{{ _('Здесь список всех клиентов: имя, телефон, статус, есть ли долг.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Кнопка добавления клиента — имя обязательно; телефон и email помогут найти человека позже.') }}</li>
+                    <li>{{ _('Поиск и фильтры сверху: по статусу или «только с долгом».') }}</li>
+                    <li>{{ _('Нажмите на имя — откроется полная карточка.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-card" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Карточка клиента') }}</h2>
+                <p>{{ _('На одном экране всё о человеке.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Смена статуса (например: Новый → В работе → Завершён).') }}</li>
+                    <li>{{ _('Комментарии — заметки только для вас, клиент их не видит.') }}</li>
+                    <li>{{ _('Напоминания — система покажет на главной, когда пора связаться.') }}</li>
+                    <li>{{ _('Заказы — что вы сделали или продали; цена — сколько клиент должен заплатить.') }}</li>
+                    <li>{{ _('Платежи — деньги, которые уже получили. Долг = заказы минус платежи.') }}</li>
+                    <li>{{ _('Записи — визиты в календаре, привязанные к клиенту.') }}</li>
+                    <li>{{ _('Сообщения — если подключены Telegram/WhatsApp, переписка появится здесь.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-orders" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Заказы и оплата') }}</h2>
+                <p>{{ _('Заказ — это услуга или товар. Платёж — деньги от клиента.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Добавить заказ: название услуги и цена.') }}</li>
+                    <li>{{ _('Добавить платёж: сумма и способ (наличные, карта, перевод).') }}</li>
+                    <li>{{ _('В списке видно: «Оплачен», «Не оплачен» или «Частично» — сверяйте перед звонком.') }}</li>
+                    <li>{{ _('Редактирование заказа — кнопка с карандашом; можно назначить сотрудника и расходы по заказу.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-cal" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Календарь и записи') }}</h2>
+                <p>{{ _('Ваше расписание: вид день, неделя или месяц.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Новая запись: время, услуга, клиент (можно не выбирать), ответственный сотрудник.') }}</li>
+                    <li>{{ _('Услуга из каталога — длительность и цена подставятся сами.') }}</li>
+                    <li>{{ _('Повтор записи — например каждую неделю (до 52 раз).') }}</li>
+                    <li>{{ _('Отмена — слот остаётся в календаре как отменённый; удаление — убирает совсем.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-status" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Статусы клиентов') }}</h2>
+                <p>{{ _('Метки вроде «Новый», «Ждёт ответа», «Готово». Свои можно добавить в «Статусы».') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Цвета помогают быстро смотреть таблицу клиентов.') }}</li>
+                    <li>{{ _('Не удаляйте статус, если на нём ещё висят клиенты.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-svc" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Каталог услуг') }}</h2>
+                <p>{{ _('Список ваших услуг с ценой и длительностью в минутах.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Удобно при записи в календаре — меньше печатать.') }}</li>
+                    <li>{{ _('Старые записи сохранят ту цену, что была при создании.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-inbox" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Входящие сообщения') }}</h2>
+                <p>{{ _('Сообщения из Telegram или WhatsApp, если владелец подключил интеграции.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Ответить можно из карточки клиента, если интеграция работает.') }}</li>
+                    <li>{{ _('Если пусто — владельцу нужно настроить «Интеграции» (см. раздел ниже).') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-rep" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Отчёты и цифры') }}</h2>
+                <p>{{ _('Цифры по бизнесу: приход, расходы, чистый результат.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('График — последние 12 месяцев.') }}</li>
+                    <li>{{ _('«Скачать CSV» — открыть в Excel для бухгалтера.') }}</li>
+                    <li>{{ _('Сравнение неделя/месяц/год — как дела сейчас по сравнению с прошлым периодом.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-staff" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Сотрудники') }}</h2>
+                <p>{{ _('Люди в команде (это не логины в CRM). Назначаются на заказы и записи.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Укажите имя и должность (мастер, администратор).') }}</li>
+                    <li>{{ _('Лучше «деактивировать», чем удалять, если человек может вернуться.') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="sec-exp" class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Расходы') }}</h2>
+                <p>{{ _('Аренда, реклама, расходники — траты не по одному заказу.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Расходы по заказу — на странице редактирования заказа (материалы на эту работу).') }}</li>
+                </ul>
+            </div>
+        </section>
+
+        {% if current_user.is_business_owner() %}
+        <section id="sec-owner" class="card mb-3 border-warning">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Для владельца бизнеса') }}</h2>
+                <p>{{ _('Только тот, кто регистрировал бизнес, видит эти пункты меню.') }}</p>
+                <ul class="mb-0">
+                    <li>{{ _('Интеграции — Telegram-бот, WhatsApp; нужны токены из этих сервисов.') }}</li>
+                    <li>{{ _('Администраторы — отдельные логины для сотрудников, которые видят клиентов, но не меняют интеграции.') }}</li>
+                    <li>{{ _('Храните пароли в секрете; у каждого админа свой email.') }}</li>
+                </ul>
+            </div>
+        </section>
+        {% endif %}
+
+        <section id="sec-faq" class="card mb-4">
+            <div class="card-body">
+                <h2 class="h5 card-title">{{ _('Частые вопросы') }}</h2>
+                <div class="mb-3">
+                    <p class="fw-semibold mb-1">{{ _('Забыли пароль?') }}</p>
+                    <p class="mb-0 text-muted">{{ _('Спросите владельца бизнеса — он может задать новый пароль администратору. Если вы владелец — зарегистрируйтесь заново только если нет другого выхода.') }}</p>
+                </div>
+                <div class="mb-3">
+                    <p class="fw-semibold mb-1">{{ _('Цифры кажутся неправильными?') }}</p>
+                    <p class="mb-0 text-muted">{{ _('Проверьте, что внесены все платежи. Долг считается автоматически: заказы минус платежи.') }}</p>
+                </div>
+                <div class="mb-3">
+                    <p class="fw-semibold mb-1">{{ _('Клиент написал в Telegram, а в CRM пусто?') }}</p>
+                    <p class="mb-0 text-muted">{{ _('Владельцу проверить «Интеграции» и ссылку webhook (часто нужно обновить после перезапуска интернета).') }}</p>
+                </div>
+                <div>
+                    <p class="fw-semibold mb-1">{{ _('Случайно удалили?') }}</p>
+                    <p class="mb-0 text-muted">{{ _('Кнопки «отменить» нет — восстановление только из резервной копии базы (спросите того, кто обслуживает сервер).') }}</p>
+                </div>
+            </div>
+        </section>
+
+        <p class="text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">{{ _('Клиенты') }}</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    section:target { scroll-margin-top: 5rem; }
+    html { scroll-behavior: smooth; }
+</style>
+{% endblock %}
